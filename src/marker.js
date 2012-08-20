@@ -25,7 +25,7 @@ Whiteboard.Marker = (function () {
 		this.context.fillStyle = this.cfg.color;
 		this.context.strokeStyle = this.cfg.color;
 
-		for (var i = len - 1, j = len - 2; j >= 0; i -= 1, j -= 1) {
+		for (var i = len - 1, j = len - 2; i >= 0; i -= 1, j -= 1) {
 			var p1 = figure[i];
 			var p2 = figure[j];
 

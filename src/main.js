@@ -92,12 +92,17 @@ var Whiteboard = (function () {
 			mousemove: 'onMouseMove'
 		};
 
-		Object.keys(listeners).forEach(function (eventType) {
-			var fnName = listeners[eventType];
-			my.container.addEventListener(eventType, function (e) {
-				return my[fnName](e);
-			}, false);
-		});
+		this.container.addEventListener('mousedown', function (e) {
+			return my.onMouseDown(e);
+		}, false);
+
+		this.container.addEventListener('mousemove', function (e) {
+			return my.onMouseMove(e);
+		}, false);
+
+		document.addEventListener('mouseup', function (e) {
+			return my.onMouseUp(e);
+		}, false);
 	};
 
 	Whiteboard.prototype.onMouseDown = function (e) {
