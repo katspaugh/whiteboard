@@ -93,12 +93,6 @@ var Whiteboard = (function () {
 	};
 
 	Whiteboard.prototype.bindEvents = function (my) {
-		var listeners = {
-			mousedown: 'onMouseDown',
-			mouseup:   'onMouseUp',
-			mousemove: 'onMouseMove'
-		};
-
 		this.container.addEventListener('mousedown', function (e) {
 			return my.onMouseDown(e);
 		}, false);
@@ -114,7 +108,6 @@ var Whiteboard = (function () {
 
 	Whiteboard.prototype.onMouseDown = function (e) {
 		this.isMouseDown = true;
-		this.isShiftPressed = e.shiftKey;
 
 		this.figure = this.createFigure(e.shiftKey ? 'eraser' : 'marker');
 
@@ -139,10 +132,9 @@ var Whiteboard = (function () {
 		var x = e.pageX - this.contPos.left;
 		var y = e.pageY - this.contPos.top;
 
-		this.figure.push([ x, y ]);
-
-		// marker or eraser
 		var figure = this.figure;
+		figure.push([ x, y ]);
+
 		var tool = this.tools[figure.type];
 		tool.draw(figure.slice(figure.length - 2));
 	};
