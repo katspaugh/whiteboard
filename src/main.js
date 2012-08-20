@@ -38,6 +38,10 @@ var Whiteboard = (function () {
 		};
 
 		this.bindEvents(this);
+
+		// debug
+		var fig = localStorage.getItem('figure');
+		if (fig) { this.drawFigure(JSON.parse(fig)); }
 	};
 
 	Whiteboard.prototype.createSocket = function () {
@@ -52,13 +56,16 @@ var Whiteboard = (function () {
 	};
 
 	Whiteboard.prototype.sendFigure = function (figure) {
-		console.dir(figure);
 		this.socket.emit('figure', figure);
+
+		// debug
+		console.dir(figure);
+		localStorage.setItem('figure', JSON.stringify(figure));
 	};
 
 	Whiteboard.prototype.drawFigure = function (figure) {
 		var tool = this.tools[figure.type];
-		tool.draw(figure);
+		tool.draw(figure, figure.radius, figure.color);
 	};
 
 	Whiteboard.prototype.createMarker = function (cfg) {
@@ -78,11 +85,11 @@ var Whiteboard = (function () {
 
 	Whiteboard.prototype.createFigure = function (type) {
 		var toolCfg = this.tools[type].cfg;
-		var figure = [];
-		figure.type = type;
-		figure.radius = toolCfg.radius;
-		figure.color = toolCfg.color;
-		return figure;
+		return new Whiteboard.Figure({
+			type: type,
+			color: toolCfg.color,
+			radius: toolCfg.radius
+		});
 	};
 
 	Whiteboard.prototype.bindEvents = function (my) {

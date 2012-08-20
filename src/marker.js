@@ -15,53 +15,40 @@ Whiteboard.Marker = (function () {
 		this.context = this.cfg.context;
 	};
 
-	Marker.prototype.draw = function (figure) {
+	Marker.prototype.draw = function (figure, radius, color) {
 		var len = figure.length;
 
 		if (!len) { return; }
 
-		var r = this.cfg.radius;
+		var r = radius || this.cfg.radius;
+		this.context.lineCap = 'round';
+		this.context.lineJoin = 'round';
+		this.context.fillStyle = color || this.cfg.color;
+		this.context.strokeStyle = color || this.cfg.color;
 		this.context.lineWidth = r * 2;
-		this.context.fillStyle = this.cfg.color;
-		this.context.strokeStyle = this.cfg.color;
 
-		for (var i = len - 1, j = len - 2; i >= 0; i -= 1, j -= 1) {
-			var p1 = figure[i];
-			var p2 = figure[j];
+		var p = figure[len - 1];
+		var x = p[0];
+		var y = p[1];
 
-			var x1 = p1[0];
-			var y1 = p1[1];
+		this.context.beginPath();
+		this.context.arc(
+			x - r, y - r,
+			r, 0, Math.PI * 2, false
+		);
+		this.context.fill();
 
-			this.context.beginPath();
-			this.context.arc( 
-				x1 - r, y1 - r,
-				r, 0, Math.PI * 2, false
-			);
-			this.context.closePath();
+		this.context.beginPath();
+		this.context.moveTo(x - r, y - r);
 
-			if (p2) {
-				var x2 = p2[0];
-				var y2 = p2[1];
-
-				this.context.beginPath();
-				this.context.moveTo(x1 - r, y1 - r);
-				this.context.lineTo(x2 - r, y2 - r);
-				this.context.closePath();
-				this.context.stroke();
-
-				// last point
-				if (j == 0) {
-					this.context.beginPath();
-					this.context.arc(
-						x2 - r, y2 - r,
-						r, 0, Math.PI * 2, false
-					);
-					this.context.closePath();
-				}
-			}
+		for (var i = len - 2; i >= 0; i -= 1) {
+			p = figure[i];
+			x = p[0];
+			y = p[1];
+			this.context.lineTo(x - r, y - r);
 		}
 
-		this.context.fill();
+		this.context.stroke();
 	};
 
 	return Marker;
