@@ -58,9 +58,7 @@ var Whiteboard = (function () {
 
 	Whiteboard.prototype.drawFigure = function (figure) {
 		var tool = this.tools[figure.type];
-		figure.forEach(function (point) {
-			tool.draw.apply(tool, point);
-		});
+		tool.draw(figure);
 	};
 
 	Whiteboard.prototype.createMarker = function (cfg) {
@@ -132,8 +130,9 @@ var Whiteboard = (function () {
 		this.figure.push([ x, y ]);
 
 		// marker or eraser
-		var tool = this.tools[this.figure.type];
-		tool.draw(x, y);
+		var figure = this.figure;
+		var tool = this.tools[figure.type];
+		tool.draw(figure.slice(figure.length - 2));
 	};
 
 	return Whiteboard;
