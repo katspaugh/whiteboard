@@ -1,8 +1,9 @@
-(function () {
+Whiteboard.Marker = (function () {
 	'use strict';
 
 	var Marker = function (cfg) {
-		return this.init(cfg || this.Defaults);
+		this.cfg = cfg || this.Defaults;
+		return this.init();
 	};
 
 	Marker.prototype.Defaults = {
@@ -10,9 +11,8 @@
 		radius: 10
 	};
 
-	Marker.prototype.init = function (cfg) {
-		this.cfg = cfg;
-		this.context = cfg.context;
+	Marker.prototype.init = function () {
+		this.context = this.cfg.context;
 	};
 
 	Marker.prototype.draw = function (x, y) {
@@ -35,5 +35,5 @@
 		this.context.clearRect(x - r, y - r, d, d);
 	};
 
-	Whiteboard.Marker = Marker;
+	return Marker;
 }());

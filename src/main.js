@@ -2,15 +2,16 @@ var Whiteboard = (function () {
 	'use strict';
 
 	var Whiteboard = function (cfg) {
-		return this.init(cfg || this.Defaults);
+		this.cfg = cfg || this.Defaults;
+		return this.init();
 	};
 
 	Whiteboard.prototype.Defaults = {
 		renderTo: 'body'
 	};
 
-	Whiteboard.prototype.init = function (cfg) {
-		var selector = cfg.renderTo || this.Defaults.renderTo;
+	Whiteboard.prototype.init = function () {
+		var selector = this.cfg.renderTo || this.Defaults.renderTo;
 		this.container = document.querySelector(selector);
 
 		if (!this.container) {
@@ -31,18 +32,35 @@ var Whiteboard = (function () {
 
 		this.socket = this.createSocket();
 
-		this.marker = this.createMarker();
-		this.eraser = this.createEraser();
-
-		this.figure = [];
+		this.tools = {
+			marker: this.createMarker(),
+			eraser: this.createEraser()
+		};
 
 		this.bindEvents(this);
 	};
 
 	Whiteboard.prototype.createSocket = function () {
-		return {
-			send: function (msg, data) { console.log(msg, data); }
-		};
+		var my = this;
+		var socket = io.connect(this.cfg.server);
+
+		socket.on('figure', function (figure) {
+			my.drawFigure(figure);
+		});
+
+		return socket;
+	};
+
+	Whiteboard.prototype.sendFigure = function (figure) {
+		console.dir(figure);
+		this.socket.emit('figure', figure);
+	};
+
+	Whiteboard.prototype.drawFigure = function (figure) {
+		var tool = this.tools[figure.type];
+		figure.forEach(function (point) {
+			tool.draw.apply(tool, point);
+		});
 	};
 
 	Whiteboard.prototype.createMarker = function (cfg) {
@@ -58,6 +76,15 @@ var Whiteboard = (function () {
 			context: this.context,
 			radius: 30
 		});
+	};
+
+	Whiteboard.prototype.createFigure = function (type) {
+		var toolCfg = this.tools[type].cfg;
+		var figure = [];
+		figure.type = type;
+		figure.radius = toolCfg.radius;
+		figure.color = toolCfg.color;
+		return figure;
 	};
 
 	Whiteboard.prototype.bindEvents = function (my) {
@@ -79,6 +106,8 @@ var Whiteboard = (function () {
 		this.isMouseDown = true;
 		this.isShiftPressed = e.shiftKey;
 
+		this.figure = this.createFigure(e.shiftKey ? 'eraser' : 'marker');
+
 		this.onMouseMove(e);
 	};
 
@@ -89,9 +118,7 @@ var Whiteboard = (function () {
 
 		this.isMouseDown = false;
 
-		if (this.figure.length) {
-			this.socket.send('figure', this.figure);
-		}
+		this.sendFigure(this.figure);
 	};
 
 	Whiteboard.prototype.onMouseMove = function (e) {
@@ -102,15 +129,11 @@ var Whiteboard = (function () {
 		var x = e.pageX - this.contPos.left;
 		var y = e.pageY - this.contPos.top;
 
-		if (this.isShiftPressed) {
-			this.figure.type = 'eraser';
-			this.eraser.draw(x, y);
-		} else {
-			this.figure.type = 'marker';
-			this.marker.draw(x, y);
-		}
-
 		this.figure.push([ x, y ]);
+
+		// marker or eraser
+		var tool = this.tools[this.figure.type];
+		tool.draw(x, y);
 	};
 
 	return Whiteboard;

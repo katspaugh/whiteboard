@@ -1,4 +1,4 @@
-(function () {
+Whiteboard.Eraser = (function () {
 	'use strict';
 
 	var Eraser = function (cfg) {
@@ -14,5 +14,5 @@
 		this.context.clearRect(x - r, y - r, d, d);
 	};
 
-	Whiteboard.Eraser = Eraser;
+	return Eraser;
 }());
