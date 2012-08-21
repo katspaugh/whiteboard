@@ -64,7 +64,12 @@ var Whiteboard = (function () {
 			if (figure.userId !== my.userId) {
 				my.id = figure.wbId;
 
+				if (figure.png) {
+					my.drawPng(figure.png);
+				}
+
 				my.setHash();
+
 				my.drawFigure(figure);
 			}
 		});
@@ -91,6 +96,16 @@ var Whiteboard = (function () {
 		);
 	};
 
+	Whiteboard.prototype.drawPng = function (png) {
+		var my = this;
+		var img = new Image();
+		img.addEventListener('load', function () {
+			my.reset(img.width, img.height);
+			my.canvas.drawImage(img);
+		}, false);
+		img.src = png;
+	};
+
 	Whiteboard.prototype.drawFigure = function (figure) {
 		var tool = this.tools[figure.type];
 		tool && tool.draw(figure, figure.radius, figure.color);
@@ -99,9 +114,9 @@ var Whiteboard = (function () {
 	Whiteboard.prototype.createMarker = function (cfg) {
 		return new Whiteboard.Marker({
 			context: this.context,
-			color: '#' + Math.round(
-				Math.random() * parseInt('FFFFFF', 16)
-			).toString(16),
+			color: '#' + (Math.round(
+				(Math.random() * parseInt('FFFFFF', 16)) / 1e6
+			) * 1e6).toString(16),
 			radius: 8
 		});
 	};
@@ -179,8 +194,13 @@ var Whiteboard = (function () {
 		tool.draw(slice);
 	};
 
-	Whiteboard.prototype.reset = function () {
+	Whiteboard.prototype.reset = function (w, h) {
+		this.width = w || this.width;
+		this.height = h || this.height;
+
+		// Effectively clears the canvas
 		this.canvas.width = this.width;
+		this.canvas.height = this.height;
 	};
 
 	return Whiteboard;
