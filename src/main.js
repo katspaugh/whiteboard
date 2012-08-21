@@ -46,27 +46,29 @@ var Whiteboard = (function () {
 		this.socket = io.connect(this.cfg.socketHost);
 
 		this.socket.on('message', function (figure) {
-			//console.dir(figure);
+			console.dir(figure);
 
 			my.cfg.id = figure.wbId;
 
 			my.drawFigure(figure);
 		});
 
+		// subscribe to messages
 		this.socket.on('connect', function () {
-			my.socket.send(
-				my.cfg.socketRoute + ':' + JSON.stringify([{
-					queue: this.cfg.id,
-					data: []
-				}])
-			);
+			var message = JSON.stringify({
+				queue: my.cfg.id || ''
+			});
+
+			my.socket.send(my.cfg.subscribe + ':' + message);
 		});
 	};
 
 	Whiteboard.prototype.sendFigure = function (figure) {
+		figure.wbId = this.cfg.id;
+
 		this.socket.send(
-			this.cfg.socketRoute + ':' + JSON.stringify([{
-				queue: this.cfg.id,
+			this.cfg.publish + ':' + JSON.stringify([{
+				queue: figure.wbId,
 				data: figure
 			}])
 		);
