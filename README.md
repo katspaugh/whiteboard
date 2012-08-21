@@ -7,4 +7,6 @@ Made with HTML5 Canvas, WebSocket (via socket.io) and Touch API.
 
 **Under initial development!**
 
-(c) RIA Novosti Media Lab
+![Imgur](http://i.imgur.com/Cil6A.png)
+
+© RIA Novosti Media Lab
