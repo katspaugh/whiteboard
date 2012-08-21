@@ -30,6 +30,9 @@ var Whiteboard = (function () {
 
 		this.context = this.canvas.getContext('2d');
 
+		this.id = this.cfg.id || this.getHash();
+		this.userId = Math.random();
+
 		this.createSockets();
 
 		this.tools = {
@@ -40,6 +43,16 @@ var Whiteboard = (function () {
 		this.bindEvents(this);
 	};
 
+	Whiteboard.prototype.getHash = function () {
+		return document.location.hash.replace(/^#/, '');
+	};
+
+	Whiteboard.prototype.setHash = function () {
+		if (document.location.hash !== this.id) {
+			document.location.hash = this.id;
+		}
+	};
+
 	Whiteboard.prototype.createSockets = function () {
 		var my = this;
 
@@ -48,15 +61,18 @@ var Whiteboard = (function () {
 		this.socket.on('message', function (figure) {
 			console.dir(figure);
 
-			my.cfg.id = figure.wbId;
+			if (figure.userId !== my.userId) {
+				my.id = figure.wbId;
 
-			my.drawFigure(figure);
+				my.setHash();
+				my.drawFigure(figure);
+			}
 		});
 
 		// subscribe to messages
 		this.socket.on('connect', function () {
 			var message = JSON.stringify({
-				queue: my.cfg.id || ''
+				queue: my.id || ''
 			});
 
 			my.socket.send(my.cfg.subscribe + ':' + message);
@@ -64,7 +80,8 @@ var Whiteboard = (function () {
 	};
 
 	Whiteboard.prototype.sendFigure = function (figure) {
-		figure.wbId = this.cfg.id;
+		figure.wbId = this.id;
+		figure.userId = this.userId;
 
 		this.socket.send(
 			this.cfg.publish + ':' + JSON.stringify([{
@@ -82,7 +99,9 @@ var Whiteboard = (function () {
 	Whiteboard.prototype.createMarker = function (cfg) {
 		return new Whiteboard.Marker({
 			context: this.context,
-			color: 'rgba(100, 0, 0, 0.3)',
+			color: '#' + Math.round(
+				Math.random() * parseInt('FFFFFF', 16)
+			).toString(16),
 			radius: 8
 		});
 	};
@@ -115,6 +134,15 @@ var Whiteboard = (function () {
 		document.addEventListener('mouseup', function (e) {
 			return my.onMouseUp(e);
 		}, false);
+
+		window.addEventListener('hashchange', function (e) {
+			return my.onHashChange(e);
+		}, false);
+	};
+
+	Whiteboard.prototype.onHashChange = function () {
+		this.id = this.getHash();
+		this.reset();
 	};
 
 	Whiteboard.prototype.onMouseDown = function (e) {
@@ -149,6 +177,10 @@ var Whiteboard = (function () {
 		var tool = this.tools[figure.type];
 		var slice = figure.slice(figure.length - 2);
 		tool.draw(slice);
+	};
+
+	Whiteboard.prototype.reset = function () {
+		this.canvas.width = this.width;
 	};
 
 	return Whiteboard;
