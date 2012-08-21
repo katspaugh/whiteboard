@@ -96,14 +96,18 @@ var Whiteboard = (function () {
 		);
 	};
 
-	Whiteboard.prototype.drawPng = function (png) {
+	Whiteboard.prototype.drawPng = function (pngUrl) {
+		if (pngUrl.indexOf('data:') !== 0) {
+			return;
+		}
+
 		var my = this;
 		var img = new Image();
 		img.addEventListener('load', function () {
 			my.reset(img.width, img.height);
 			my.canvas.drawImage(img);
 		}, false);
-		img.src = png;
+		img.src = pngUrl;
 	};
 
 	Whiteboard.prototype.drawFigure = function (figure) {
