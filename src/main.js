@@ -30,7 +30,7 @@ var Whiteboard = (function () {
 
 		this.context = this.canvas.getContext('2d');
 
-		this.socket = this.createSocket();
+		this.createSockets();
 
 		this.tools = {
 			marker: this.createMarker(),
@@ -38,40 +38,49 @@ var Whiteboard = (function () {
 		};
 
 		this.bindEvents(this);
-
-		// debug
-		var fig = localStorage.getItem('figure');
-		if (fig) { this.drawFigure(JSON.parse(fig)); }
 	};
 
-	Whiteboard.prototype.createSocket = function () {
+	Whiteboard.prototype.createSockets = function () {
 		var my = this;
-		var socket = io.connect(this.cfg.server);
 
-		socket.on('figure', function (figure) {
+		this.socket = io.connect(this.cfg.socketHost);
+
+		this.socket.on('message', function (figure) {
+			//console.dir(figure);
+
+			my.cfg.id = figure.wbId;
+
 			my.drawFigure(figure);
 		});
 
-		return socket;
+		this.socket.on('connect', function () {
+			my.socket.send(
+				my.cfg.socketRoute + ':' + JSON.stringify([{
+					queue: this.cfg.id,
+					data: []
+				}])
+			);
+		});
 	};
 
 	Whiteboard.prototype.sendFigure = function (figure) {
-		this.socket.emit('figure', figure);
-
-		// debug
-		console.dir(figure);
-		localStorage.setItem('figure', JSON.stringify(figure));
+		this.socket.send(
+			this.cfg.socketRoute + ':' + JSON.stringify([{
+				queue: this.cfg.id,
+				data: figure
+			}])
+		);
 	};
 
 	Whiteboard.prototype.drawFigure = function (figure) {
 		var tool = this.tools[figure.type];
-		tool.draw(figure, figure.radius, figure.color);
+		tool && tool.draw(figure, figure.radius, figure.color);
 	};
 
 	Whiteboard.prototype.createMarker = function (cfg) {
 		return new Whiteboard.Marker({
 			context: this.context,
-			color: 'red',
+			color: 'rgba(100, 0, 0, 0.3)',
 			radius: 8
 		});
 	};
@@ -136,7 +145,8 @@ var Whiteboard = (function () {
 		figure.push([ x, y ]);
 
 		var tool = this.tools[figure.type];
-		tool.draw(figure.slice(figure.length - 2));
+		var slice = figure.slice(figure.length - 2);
+		tool.draw(slice);
 	};
 
 	return Whiteboard;
