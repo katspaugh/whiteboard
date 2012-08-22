@@ -6,9 +6,12 @@ Whiteboard.Figure = (function () {
 		this.type = cfg.type;
 		this.color = cfg.color;
 		this.radius = cfg.radius;
+		this.data = [];
 	};
 
-	Figure.prototype = [];
+	Figure.prototype.push = function (point) {
+		return this.data.push(point);
+	};
 
 	return Figure;
 }());

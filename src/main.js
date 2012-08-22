@@ -7,40 +7,40 @@ var Whiteboard = (function () {
 	};
 
 	Whiteboard.prototype.Defaults = {
-		renderTo: 'body'
 	};
 
 	Whiteboard.prototype.init = function () {
-		var selector = this.cfg.renderTo || this.Defaults.renderTo;
-		this.container = document.querySelector(selector);
-
-		if (!this.container) {
-			console.error('No container with selector "%s"', selector);
-			return;
-		}
-
-		this.width = this.container.clientWidth;
-		this.height = this.container.clientHeight;
-		this.contPos = this.container.getBoundingClientRect();
-
-		this.canvas = document.createElement('canvas');
-		this.canvas.width = this.width;
-		this.canvas.height = this.height;
-		this.container.appendChild(this.canvas);
-
-		this.context = this.canvas.getContext('2d');
+		this.drawer = new Whiteboard.Drawer(this.cfg);
 
 		this.id = this.cfg.id || this.getHash();
 		this.userId = Math.random();
 
+		this.createTools();
 		this.createSockets();
+		this.bindEvents();
+	};
 
+	Whiteboard.prototype.createTools = function () {
 		this.tools = {
-			marker: this.createMarker(),
-			eraser: this.createEraser()
-		};
+			marker: {
+				type: 'marker',
+				color: this.getRandomColor(),
+				radius: 8
+			},
 
-		this.bindEvents(this);
+			eraser: {
+				type: 'eraser',
+				radius: 30
+			}
+		};
+	};
+
+	Whiteboard.prototype.getRandomColor = function (colorsCount) {
+		var max = parseInt('FFFFFF', 16);
+		var rounding = (max / colorsCount || 1);
+		return '#' + (Math.round(
+			(Math.random() * max) / rounding
+		) * rounding).toString(16);
 	};
 
 	Whiteboard.prototype.getHash = function () {
@@ -65,16 +65,16 @@ var Whiteboard = (function () {
 				my.id = message.wbId;
 
 				if (message.png && message.png.ok) {
-					my.drawPng(message.png.url);
+					my.drawer.drawPng(message.png.url);
 				}
 
 				my.setHash();
 
 				if (message.width || message.height) {
-					my.resize(message.width, message.height);
+					my.drawer.resize(message.width, message.height);
 				}
 
-				my.drawFigure(message.figure);
+				my.drawer.drawFigure(message.figure);
 			}
 		});
 
@@ -92,8 +92,8 @@ var Whiteboard = (function () {
 		var message = {
 			wbId: this.id,
 			userId: this.userId,
-			width: this.width,
-			height: this.height,
+			width: this.drawer.width,
+			height: this.drawer.height,
 			figure: figure
 		};
 
@@ -105,53 +105,16 @@ var Whiteboard = (function () {
 		);
 	};
 
-	Whiteboard.prototype.drawPng = function (pngUrl) {
+	Whiteboard.prototype.bindEvents = function () {
 		var my = this;
-		var img = new Image();
-		img.addEventListener('load', function () {
-			my.reset();
-			my.context.drawImage(img, 0, 0);
-		}, false);
-		img.src = pngUrl;
-	};
 
-	Whiteboard.prototype.drawFigure = function (figure) {
-		var tool = this.tools[figure.type];
-		tool && tool.draw(figure, figure.radius, figure.color);
-	};
+		var container = this.drawer.container;
 
-	Whiteboard.prototype.createMarker = function (cfg) {
-		return new Whiteboard.Marker({
-			context: this.context,
-			color: '#' + (Math.round(
-				(Math.random() * parseInt('FFFFFF', 16)) / 1e6
-			) * 1e6).toString(16),
-			radius: 8
-		});
-	};
-
-	Whiteboard.prototype.createEraser = function (cfg) {
-		return new Whiteboard.Eraser({
-			context: this.context,
-			radius: 30
-		});
-	};
-
-	Whiteboard.prototype.createFigure = function (type) {
-		var toolCfg = this.tools[type].cfg;
-		return new Whiteboard.Figure({
-			type: type,
-			color: toolCfg.color,
-			radius: toolCfg.radius
-		});
-	};
-
-	Whiteboard.prototype.bindEvents = function (my) {
-		this.container.addEventListener('mousedown', function (e) {
+		container.addEventListener('mousedown', function (e) {
 			return my.onMouseDown(e);
 		}, false);
 
-		this.container.addEventListener('mousemove', function (e) {
+		container.addEventListener('mousemove', function (e) {
 			return my.onMouseMove(e);
 		}, false);
 
@@ -172,7 +135,9 @@ var Whiteboard = (function () {
 	Whiteboard.prototype.onMouseDown = function (e) {
 		this.isMouseDown = true;
 
-		this.figure = this.createFigure(e.shiftKey ? 'eraser' : 'marker');
+		this.figure = this.drawer.createFigure(
+			this.tools[e.shiftKey ? 'eraser' : 'marker']
+		);
 
 		this.onMouseMove(e);
 	};
@@ -192,49 +157,13 @@ var Whiteboard = (function () {
 
 		if (!this.isMouseDown) { return; }
 
-		var x = e.pageX - this.contPos.left;
-		var y = e.pageY - this.contPos.top;
+		var x = e.pageX - this.drawer.contPos.left;
+		var y = e.pageY - this.drawer.contPos.top;
 
 		var figure = this.figure;
 		figure.push([ x, y ]);
 
-		var tool = this.tools[figure.type];
-		var slice = figure.slice(figure.length - 2);
-		tool.draw(slice);
-	};
-
-	Whiteboard.prototype.reset = function () {
-		this.canvas.getContext('2d').clearRect(
-			0, 0, this.width, this.height
-		);
-	};
-
-	Whiteboard.prototype.getData = function () {
-		return this.context.getImageData(
-			0, 0, this.width, this.height
-		);
-	};
-
-	Whiteboard.prototype.putData = function (data) {
-		return this.context.putImageData(data, 0, 0);
-	};
-
-	Whiteboard.prototype.resize = function (w, h) {
-		var data;
-
-		if (null != w && this.width != w) {
-			data = this.getData();
-			this.width = this.canvas.width = w;
-		}
-
-		if (null != h && this.height != h) {
-			data = this.getData();
-			this.height = this.canvas.height = h;
-		}
-
-		if (data) {
-			this.putData(data);
-		}
+		this.drawer.drawFigure(this.figure, 2);
 	};	
 
 	return Whiteboard;
