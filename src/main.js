@@ -65,10 +65,14 @@ var Whiteboard = (function () {
 				my.id = message.wbId;
 
 				if (message.png && message.png.ok) {
-					my.drawPng(message.png.data);
+					my.drawPng(message.png.url);
 				}
 
 				my.setHash();
+
+				if (message.width || message.height) {
+					my.resize(message.width, message.height);
+				}
 
 				my.drawFigure(message.figure);
 			}
@@ -88,6 +92,8 @@ var Whiteboard = (function () {
 		var message = {
 			wbId: this.id,
 			userId: this.userId,
+			width: this.width,
+			height: this.height,
 			figure: figure
 		};
 
@@ -103,8 +109,8 @@ var Whiteboard = (function () {
 		var my = this;
 		var img = new Image();
 		img.addEventListener('load', function () {
-			my.reset(img.width, img.height);
-			my.canvas.drawImage(img);
+			my.reset();
+			my.context.drawImage(img, 0, 0);
 		}, false);
 		img.src = pngUrl;
 	};
@@ -197,14 +203,39 @@ var Whiteboard = (function () {
 		tool.draw(slice);
 	};
 
-	Whiteboard.prototype.reset = function (w, h) {
-		this.width = w || this.width;
-		this.height = h || this.height;
-
-		// Effectively clears the canvas
-		this.canvas.width = this.width;
-		this.canvas.height = this.height;
+	Whiteboard.prototype.reset = function () {
+		this.canvas.getContext('2d').clearRect(
+			0, 0, this.width, this.height
+		);
 	};
+
+	Whiteboard.prototype.getData = function () {
+		return this.context.getImageData(
+			0, 0, this.width, this.height
+		);
+	};
+
+	Whiteboard.prototype.putData = function (data) {
+		return this.context.putImageData(data, 0, 0);
+	};
+
+	Whiteboard.prototype.resize = function (w, h) {
+		var data;
+
+		if (null != w && this.width != w) {
+			data = this.getData();
+			this.width = this.canvas.width = w;
+		}
+
+		if (null != h && this.height != h) {
+			data = this.getData();
+			this.height = this.canvas.height = h;
+		}
+
+		if (data) {
+			this.putData(data);
+		}
+	};	
 
 	return Whiteboard;
 }());
