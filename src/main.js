@@ -38,9 +38,9 @@ var Whiteboard = (function () {
 	Whiteboard.prototype.getRandomColor = function (colorsCount) {
 		var max = parseInt('FFFFFF', 16);
 		var rounding = (max / colorsCount || 1);
-		return '#' + (Math.round(
+		return '#' + ('00000' + (Math.round(
 			(Math.random() * max) / rounding
-		) * rounding).toString(16);
+		) * rounding).toString(16)).slice(-6);
 	};
 
 	Whiteboard.prototype.getHash = function () {
@@ -61,27 +61,28 @@ var Whiteboard = (function () {
 		this.socket.on('message', function (message) {
 			console.dir(message);
 
-			if (message.userId !== my.userId) {
-				my.id = message.wbId;
+			my.id = message.wbId;
 
+			if (message.userId == my.userId) {
 				if (message.png && message.png.ok) {
 					my.drawer.drawPng(message.png.url);
 				}
-
-				my.setHash();
-
+			} else {
 				if (message.width || message.height) {
 					my.drawer.resize(message.width, message.height);
 				}
 
 				my.drawer.drawFigure(message.figure);
 			}
+
+			my.setHash();
 		});
 
 		// subscribe to messages
 		this.socket.on('connect', function () {
 			var message = JSON.stringify({
-				queue: my.id || ''
+				queue: my.id || '',
+				userId: my.userId
 			});
 
 			my.socket.send(my.cfg.subscribe + ':' + message);
@@ -129,7 +130,7 @@ var Whiteboard = (function () {
 
 	Whiteboard.prototype.onHashChange = function () {
 		this.id = this.getHash();
-		this.reset();
+		this.drawer.reset();
 	};
 
 	Whiteboard.prototype.onMouseDown = function (e) {

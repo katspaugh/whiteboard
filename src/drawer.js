@@ -137,7 +137,7 @@
 		}
 
 		for (var i = data.length - 1; i >= 0; i -= 1) {
-			var p = figure[i];
+			var p = data[i];
 			var x = p[0];
 			var y = p[1];
 			this.context.clearRect(x - r, y - r, d, d);
