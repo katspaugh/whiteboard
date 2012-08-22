@@ -134,6 +134,8 @@ var Whiteboard = (function () {
 	};
 
 	Whiteboard.prototype.onMouseDown = function (e) {
+		if (1 != e.which) { return; }
+
 		this.isMouseDown = true;
 
 		this.figure = this.drawer.createFigure(
@@ -144,6 +146,8 @@ var Whiteboard = (function () {
 	};
 
 	Whiteboard.prototype.onMouseUp = function (e) {
+		if (1 != e.which) { return; }
+
 		e.preventDefault();
 
 		if (!this.isMouseDown) { return; }
