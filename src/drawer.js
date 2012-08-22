@@ -1,16 +1,16 @@
-Whiteboard.Drawer = (function () {
+(function (NS) {
 	'use strict';
 
 	var Drawer = function (cfg) {
 		this.cfg = cfg || this.Defaults;
-		return this.init();
+		return this.initCanvas();
 	};
 
 	Drawer.prototype.Defaults = {
 		renderTo: 'body'
 	};
 
-	Drawer.prototype.init = function () {
+	Drawer.prototype.initCanvas = function () {
 		var selector = this.cfg.renderTo || this.Defaults.renderTo;
 		this.container = document.querySelector(selector);
 
@@ -49,7 +49,7 @@ Whiteboard.Drawer = (function () {
 	};
 
 	Drawer.prototype.createFigure = function (cfg) {
-		return new Whiteboard.Figure(cfg);
+		return new NS.Figure(cfg);
 	};
 
 	Drawer.prototype.reset = function () {
@@ -64,8 +64,8 @@ Whiteboard.Drawer = (function () {
 		);
 	};
 
-	Drawer.prototype.putData = function (data) {
-		return this.context.putImageData(data, 0, 0);
+	Drawer.prototype.putData = function (data, x, y) {
+		return this.context.putImageData(data, x || 0, y || 0);
 	};
 
 	Drawer.prototype.resize = function (w, h) {
@@ -144,5 +144,9 @@ Whiteboard.Drawer = (function () {
 		}
 	};
 
-	return Drawer;
-}());
+	if (NS.module) {
+		NS.module.exports = Drawer;
+	} else {
+		NS.Drawer = Drawer;
+	}
+}(this.Whiteboard || this));

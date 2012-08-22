@@ -1,4 +1,4 @@
-Whiteboard.Figure = (function () {
+(function (NS) {
 	'use strict';
 
 	var Figure = function (cfg) {
@@ -13,5 +13,9 @@ Whiteboard.Figure = (function () {
 		return this.data.push(point);
 	};
 
-	return Figure;
-}());
+	if (NS.module) {
+		NS.module.exports = Figure;
+	} else {
+		NS.Figure = Figure;
+	}
+}(this.Whiteboard || this));
