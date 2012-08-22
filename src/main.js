@@ -15,6 +15,8 @@ var Whiteboard = (function () {
 		this.id = this.cfg.id || this.getHash();
 		this.userId = Math.random();
 
+		this.figures = {};
+
 		this.createTools();
 		this.createSockets();
 		this.bindEvents();
@@ -111,6 +113,7 @@ var Whiteboard = (function () {
 
 		var container = this.drawer.container;
 
+		// mouse
 		container.addEventListener('mousedown', function (e) {
 			return my.onMouseDown(e);
 		}, false);
@@ -123,9 +126,55 @@ var Whiteboard = (function () {
 			return my.onMouseUp(e);
 		}, false);
 
+		// multitouch
+		container.addEventListener('touchstart', function (e) {
+			return my.onTouchStart(e);
+		}, false);
+
+		container.addEventListener('touchmove', function (e) {
+			return my.onTouchMove(e);
+		}, false);
+
+		document.addEventListener('touchend', function (e) {
+			return my.onTouchEnd(e);
+		}, false);
+
+		// hashchange
 		window.addEventListener('hashchange', function (e) {
 			return my.onHashChange(e);
 		}, false);
+	};
+
+
+	Whiteboard.prototype.onTouchStart = function (e) {
+		var touches = e.targetTouches;
+		for (var i = 0, len = touches.length; i < len; i += 1) {
+			var finger = touches[i];
+			this.figures[finger.identifier] =
+				this.drawer.createFigure(this.tools.marker);
+		}
+	};
+
+	Whiteboard.prototype.onTouchEnd = function (e) {
+		var touches = e.changedTouches;
+		for (var i = 0, len = touches.length; i < len; i += 1) {
+			var finger = touches[i];
+			delete this.figures[finger.identifier];
+		}
+	};
+
+	Whiteboard.prototype.onTouchMove = function (e) {
+		var touches = e.changedTouches;
+		for (var i = 0, len = touches.length; i < len; i += 1) {
+			var finger = touches[i];
+			var figure = this.figures[finger.identifier];
+
+			if (figure) {
+				var x = finger.pageX;
+				var y = finger.pageY;
+				this.drawLine(figure, x, y);
+			}
+		}
 	};
 
 	Whiteboard.prototype.onHashChange = function () {
@@ -138,7 +187,7 @@ var Whiteboard = (function () {
 
 		this.isMouseDown = true;
 
-		this.figure = this.drawer.createFigure(
+		this.figures.mouse = this.drawer.createFigure(
 			this.tools[e.shiftKey ? 'eraser' : 'marker']
 		);
 
@@ -162,14 +211,20 @@ var Whiteboard = (function () {
 
 		if (!this.isMouseDown) { return; }
 
-		var x = e.pageX - this.drawer.contPos.left;
-		var y = e.pageY - this.drawer.contPos.top;
+		var figure = this.figures.mouse;
 
-		var figure = this.figure;
-		figure.push([ x, y ]);
+		this.drawLine(figure, e.pageX, e.pageY);
+	};
 
-		this.drawer.drawFigure(this.figure, 2);
-	};	
+	Whiteboard.prototype.drawLine = function (figure, x, y) {
+		var relX = x - this.drawer.contPos.left;
+		var relY = y - this.drawer.contPos.top;
+
+		figure.push([ relX, relY ]);
+
+		this.drawer.drawFigure(figure, 2);
+
+	};
 
 	return Whiteboard;
 }());
