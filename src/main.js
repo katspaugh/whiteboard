@@ -58,19 +58,19 @@ var Whiteboard = (function () {
 
 		this.socket = io.connect(this.cfg.socketHost);
 
-		this.socket.on('message', function (figure) {
-			console.dir(figure);
+		this.socket.on('message', function (message) {
+			console.dir(message);
 
-			if (figure.userId !== my.userId) {
-				my.id = figure.wbId;
+			if (message.userId !== my.userId) {
+				my.id = message.wbId;
 
-				if (figure.png) {
-					my.drawPng(figure.png);
+				if (message.png && message.png.ok) {
+					my.drawPng(message.png.data);
 				}
 
 				my.setHash();
 
-				my.drawFigure(figure);
+				my.drawFigure(message.figure);
 			}
 		});
 
@@ -85,22 +85,21 @@ var Whiteboard = (function () {
 	};
 
 	Whiteboard.prototype.sendFigure = function (figure) {
-		figure.wbId = this.id;
-		figure.userId = this.userId;
+		var message = {
+			wbId: this.id,
+			userId: this.userId,
+			figure: figure
+		};
 
 		this.socket.send(
 			this.cfg.publish + ':' + JSON.stringify([{
-				queue: figure.wbId,
-				data: figure
+				queue: this.id,
+				data: message
 			}])
 		);
 	};
 
 	Whiteboard.prototype.drawPng = function (pngUrl) {
-		if (pngUrl.indexOf('data:') !== 0) {
-			return;
-		}
-
 		var my = this;
 		var img = new Image();
 		img.addEventListener('load', function () {
