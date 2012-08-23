@@ -70,10 +70,10 @@ var Whiteboard = (function () {
 			my.id = message.wbId;
 
 			if (message.userId == my.userId) {
-				if (message.snapshotUrl) {
+				if (message.snapshot && message.snapshot.ok) {
 					console.log('SOCKET RECEIVE SUBSCRIBE', message);
 
-					my.drawer.drawPng(message.snapshotUrl);
+					my.drawer.drawPng(message.snapshot.url);
 				}
 			} else {
 				console.log('SOCKET RECEIVE FIGURE', message);
