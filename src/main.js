@@ -1,12 +1,26 @@
 var Whiteboard = (function () {
 	'use strict';
 
+	var extend = function (toObj, fromObj) {
+		toObj = toObj || {};
+		Object.keys(fromObj).forEach(function (key) {
+			if (!(key in toObj)) {
+				toObj[key] = fromObj[key];
+			}
+		});
+		return toObj;
+	};
+
 	var Whiteboard = function (cfg) {
-		this.cfg = cfg || this.Defaults;
+		this.cfg = extend(cfg, this.Defaults);
 		return this.init();
 	};
 
 	Whiteboard.prototype.Defaults = {
+		renderTo: 'body',
+		markerRadius: 8,
+		eraserRadius: 30,
+		markerColor: '#000'
 	};
 
 	Whiteboard.prototype.init = function () {
@@ -26,23 +40,15 @@ var Whiteboard = (function () {
 		this.tools = {
 			marker: {
 				type: 'marker',
-				color: this.getRandomColor(),
-				radius: 8
+				color: this.cfg.markerColor,
+				radius: this.cfg.markerRadius
 			},
 
 			eraser: {
 				type: 'eraser',
-				radius: 30
+				radius: this.cfg.eraserRadius
 			}
 		};
-	};
-
-	Whiteboard.prototype.getRandomColor = function (colorsCount) {
-		var max = parseInt('FFFFFF', 16);
-		var rounding = (max / colorsCount || 1);
-		return '#' + ('00000' + (Math.round(
-			(Math.random() * max) / rounding
-		) * rounding).toString(16)).slice(-6);
 	};
 
 	Whiteboard.prototype.getHash = function () {
@@ -64,10 +70,10 @@ var Whiteboard = (function () {
 			my.id = message.wbId;
 
 			if (message.userId == my.userId) {
-				if (message.png && message.png.ok) {
+				if (message.snapshotUrl) {
 					console.log('SOCKET RECEIVE SUBSCRIBE', message);
 
-					my.drawer.drawPng(message.png.url);
+					my.drawer.drawPng(message.snapshotUrl);
 				}
 			} else {
 				console.log('SOCKET RECEIVE FIGURE', message);

@@ -2,40 +2,59 @@
 	'use strict';
 
 	var Drawer = function (cfg) {
-		this.cfg = cfg || this.Defaults;
-		return this.initCanvas();
+		this.cfg = cfg || {};
+		return this._init();
 	};
 
-	Drawer.prototype.Defaults = {
-		renderTo: 'body'
-	};
+	Drawer.prototype._init = function () {
+		this.width = this.cfg.width;
+		this.height = this.cfg.height;
 
-	Drawer.prototype.initCanvas = function () {
-		var selector = this.cfg.renderTo || this.Defaults.renderTo;
-		this.container = document.querySelector(selector);
+		if (this.cfg.renderTo) {
+			this.container = document.querySelector(this.cfg.renderTo);
+			this.contPos = this.container.getBoundingClientRect();
 
-		if (!this.container) {
-			console.error('No container with selector "%s"', selector);
-			return;
+			if (!this.width) {
+				this.width = this.container.clientWidth;
+			}
+			if (!this.height) {
+				this.height =  this.container.clientHeight;
+			}
+		} else {
+			this.contPos = {
+				left: 0,
+				top: 0
+			};
 		}
 
-		this.width = this.container.clientWidth;
-		this.height = this.container.clientHeight;
-		this.contPos = this.container.getBoundingClientRect();
-
-		this.canvas = document.createElement('canvas');
-		this.canvas.width = this.width;
-		this.canvas.height = this.height;
-		this.container.appendChild(this.canvas);
-
+		this.canvas = this.createCanvas(this.width, this.height);
 		this.context = this.canvas.getContext('2d');
+
+		if (this.container) {
+			this.container.appendChild(this.canvas);
+		}
+	};
+
+	Drawer.prototype.createCanvas = function (w, h) {
+		var canvas;
+
+		// HTML5 Canvas
+		if ('undefined' != typeof document) {
+			canvas = document.createElement('canvas');
+			canvas.width = w;
+			canvas.height = h;
+		// node-canvas
+		} else if ('undefined' !== typeof Canvas) {
+			canvas = new Canvas(w, h);
+		}
+
+		return canvas;
 	};
 
 	Drawer.prototype.drawPng = function (pngUrl) {
 		var my = this;
 		var img = new Image();
 		img.addEventListener('load', function () {
-			my.reset();
 			my.context.drawImage(img, 0, 0);
 		}, false);
 		img.src = pngUrl;
