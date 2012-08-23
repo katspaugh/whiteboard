@@ -1,0 +1,2 @@
+Whiteboard.Socket = (function () {
+}());

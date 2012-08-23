@@ -13,7 +13,7 @@ var Whiteboard = (function () {
 		this.drawer = new Whiteboard.Drawer(this.cfg);
 
 		this.id = this.cfg.id || this.getHash();
-		this.userId = Math.random();
+		this.userId = Math.random().toString(32).substring(2);
 
 		this.figures = {};
 
@@ -61,15 +61,17 @@ var Whiteboard = (function () {
 		this.socket = io.connect(this.cfg.socketHost);
 
 		this.socket.on('message', function (message) {
-			console.dir(message);
-
 			my.id = message.wbId;
 
 			if (message.userId == my.userId) {
 				if (message.png && message.png.ok) {
+					console.log('SOCKET RECEIVE SUBSCRIBE', message);
+
 					my.drawer.drawPng(message.png.url);
 				}
 			} else {
+				console.log('SOCKET RECEIVE FIGURE', message);
+
 				if (message.width || message.height) {
 					my.drawer.resize(message.width, message.height);
 				}
@@ -82,30 +84,38 @@ var Whiteboard = (function () {
 
 		// subscribe to messages
 		this.socket.on('connect', function () {
-			var message = JSON.stringify({
+			var message = {
 				queue: my.id || '',
 				userId: my.userId
-			});
+			};
 
-			my.socket.send(my.cfg.subscribe + ':' + message);
+			console.log('SOCKET SEND SUBSCRIBE', message);
+
+			my.socket.send([
+				my.cfg.subscribe,
+				JSON.stringify(message)
+			].join(':'));
 		});
 	};
 
 	Whiteboard.prototype.sendFigure = function (figure) {
 		var message = {
-			wbId: this.id,
-			userId: this.userId,
-			width: this.drawer.width,
-			height: this.drawer.height,
-			figure: figure
+			queue: this.id,
+			data: {
+				wbId: this.id,
+				userId: this.userId,
+				width: this.drawer.width,
+				height: this.drawer.height,
+				figure: figure
+			}
 		};
 
-		this.socket.send(
-			this.cfg.publish + ':' + JSON.stringify([{
-				queue: this.id,
-				data: message
-			}])
-		);
+		console.log('SOCKET SEND FIGURE', message);
+
+		this.socket.send([
+			this.cfg.publish,
+			JSON.stringify(message)
+		].join(':'));
 	};
 
 	Whiteboard.prototype.bindEvents = function () {
@@ -159,12 +169,16 @@ var Whiteboard = (function () {
 		var touches = e.changedTouches;
 		for (var i = 0, len = touches.length; i < len; i += 1) {
 			var finger = touches[i];
-			delete this.figures[finger.identifier];
+			this.onEndFigure(finger.identifier);
 		}
 	};
 
 	Whiteboard.prototype.onTouchMove = function (e) {
 		var touches = e.changedTouches;
+
+		// FIXME: temporarily disallow drawing with many fingers
+		if (touches.length > 1) { return; }
+
 		for (var i = 0, len = touches.length; i < len; i += 1) {
 			var finger = touches[i];
 			var figure = this.figures[finger.identifier];
@@ -203,7 +217,7 @@ var Whiteboard = (function () {
 
 		this.isMouseDown = false;
 
-		this.sendFigure(this.figure);
+		this.onEndFigure('mouse');
 	};
 
 	Whiteboard.prototype.onMouseMove = function (e) {
@@ -223,7 +237,14 @@ var Whiteboard = (function () {
 		figure.push([ relX, relY ]);
 
 		this.drawer.drawFigure(figure, 2);
+	};
 
+	Whiteboard.prototype.onEndFigure = function (id) {
+		var figure = this.figures[id];
+		if (figure) {
+			this.sendFigure(figure);
+			delete this.figures[id];
+		}
 	};
 
 	return Whiteboard;
