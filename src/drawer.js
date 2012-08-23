@@ -52,11 +52,16 @@
 	};
 
 	Drawer.prototype.drawPng = function (pngUrl) {
-		var my = this;
 		var img = new Image();
+		var ctx = this.context;
+
 		img.addEventListener('load', function () {
-			my.context.drawImage(img, 0, 0);
+			var prevMode = ctx.globalCompositeOperation;
+			ctx.globalCompositeOperation = 'destination-over';
+			ctx.drawImage(img, 0, 0);
+			ctx.globalCompositeOperation = prevMode;
 		}, false);
+
 		img.src = pngUrl;
 	};
 
