@@ -180,10 +180,12 @@ var Whiteboard = (function () {
 	};
 
 	Whiteboard.prototype.onTouchMove = function (e) {
-		var touches = e.changedTouches;
-
 		// FIXME: temporarily disallow drawing with many fingers
-		if (touches.length > 1) { return; }
+		if (e.touches.length > 1) { return; }
+
+		e.preventDefault();
+
+		var touches = e.changedTouches;
 
 		for (var i = 0, len = touches.length; i < len; i += 1) {
 			var finger = touches[i];
