@@ -68,24 +68,21 @@ var Whiteboard = (function () {
 
 		this.socket.on('message', function (message) {
 			my.id = message.wbId;
+			my.setHash();
+
+			console.log('SOCKET RECEIVE', message);
 
 			if (message.userId == my.userId) {
-				if (message.snapshot && message.snapshot.ok) {
-					console.log('SOCKET RECEIVE SUBSCRIBE', message);
-
-					my.drawer.drawPng(message.snapshot.url);
+				if (message.snapshot) {
+					my.drawer.drawPng(message.snapshot);
 				}
 			} else {
-				console.log('SOCKET RECEIVE FIGURE', message);
-
 				if (message.width || message.height) {
 					my.drawer.resize(message.width, message.height);
 				}
 
 				my.drawer.drawFigure(message.figure);
 			}
-
-			my.setHash();
 		});
 
 		// subscribe to messages
