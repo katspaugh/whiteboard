@@ -11,7 +11,14 @@
 		this.height = this.cfg.height;
 
 		if (this.cfg.renderTo) {
-			this.container = document.querySelector(this.cfg.renderTo);
+			if (this.cfg.renderTo instanceof HTMLElement) {
+				this.container = this.cfg.renderTo;
+			} else {
+				this.container = document.querySelector(
+					String(this.cfg.renderTo)
+				);
+			}
+
 			this.contPos = this.container.getBoundingClientRect();
 
 			if (!this.width) {
