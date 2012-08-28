@@ -86,7 +86,9 @@ var Whiteboard = (function () {
 					my.drawer.resize(message.width, message.height);
 				}
 
-				my.drawer.drawFigure(message.figure);
+				if (message.figure) {
+					my.drawer.drawFigure(message.figure);
+				}
 			}
 		});
 
@@ -105,10 +107,10 @@ var Whiteboard = (function () {
 			].join(':'));
 		};
 
-		if (this.socket.connected) {
+		if (this.socket.socket.connected) {
 			onConnect();
 		} else {
-			this.socket.on('connect', onConnect);
+			this.socket.once('connect', onConnect);
 		}
 	};
 
