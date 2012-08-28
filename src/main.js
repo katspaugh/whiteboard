@@ -173,6 +173,8 @@ var Whiteboard = (function () {
 
 
 	Whiteboard.prototype.onTouchStart = function (e) {
+		this.drawer.updateContPos();
+
 		var touches = e.targetTouches;
 		for (var i = 0, len = touches.length; i < len; i += 1) {
 			var finger = touches[i];
@@ -218,6 +220,8 @@ var Whiteboard = (function () {
 		if (1 != e.which) { return; }
 
 		this.isMouseDown = true;
+
+		this.drawer.updateContPos();
 
 		this.figures.mouse = this.drawer.createFigure(
 			this.tools[e.shiftKey ? 'eraser' : 'marker']

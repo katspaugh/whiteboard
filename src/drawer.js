@@ -175,6 +175,12 @@
 		}
 	};
 
+	Drawer.prototype.updateContPos = function () {
+		if (this.container) {
+			this.contPos = this.container.getBoundingClientRect();
+		}
+	};
+
 	if (NS.module) {
 		NS.module.exports = Drawer;
 	} else {
