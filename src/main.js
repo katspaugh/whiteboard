@@ -24,17 +24,21 @@ var Whiteboard = (function () {
 	};
 
 	Whiteboard.prototype.init = function () {
+		if (this.cfg.observable) {
+			this.observable = this.cfg.observable;
+		}
+
 		this.drawer = new Whiteboard.Drawer(this.cfg);
 
-		this.id = this.cfg.id || this.getHash();
+		this.id = this.cfg.id;
 		this.userId = this.cfg.userId ||
 			Math.random().toString(32).substring(2);
 
 		this.figures = {};
 
 		this.createTools();
-		this.createSocket();
-		this.bindEvents();
+		this.bindSocket();
+		this.bindInput();
 	};
 
 	Whiteboard.prototype.createTools = function () {
@@ -56,65 +60,74 @@ var Whiteboard = (function () {
 		return document.location.hash.replace(/^#/, '');
 	};
 
-	Whiteboard.prototype.setHash = function () {
-		if (document.location.hash !== this.id) {
-			document.location.hash = this.id;
+	Whiteboard.prototype.bindSocket = function () {
+		if (this.cfg.socket) {
+			this.socket = this.cfg.socket;
+		} else if (this.cfg.socketHost) {
+			this.socket = io.connect(this.cfg.socketHost);
+		} else {
+			return;
+		}
+
+		this._onMessage = this.onMessage.bind(this);
+		this.socket.on('message', this._onMessage);
+
+		this._onConnect = this.onConnect.bind(this);
+		if (this.socket.socket.connected) {
+			this.onConnect();
+		} else {
+			this.socket.once('connect', this._onConnect, this);
 		}
 	};
 
-	Whiteboard.prototype.createSocket = function () {
-		var my = this;
-
-		if (this.cfg.socket) {
-			this.socket = this.cfg.socket;
-		} else {
-			this.socket = io.connect(this.cfg.socketHost);
-		}
-
-		this.socket.on('message', function (message) {
-			my.id = message.wbId;
-			my.setHash();
-
-			console.log('SOCKET RECEIVE', message);
-
-			if (message.userId == my.userId) {
-				if (message.snapshot) {
-					my.drawer.drawPng(message.snapshot);
-				}
-			} else {
-				if (message.width || message.height) {
-					my.drawer.resize(message.width, message.height);
-				}
-
-				if (message.figure) {
-					my.drawer.drawFigure(message.figure);
-				}
-			}
-		});
-
-		// subscribe to messages
-		var onConnect = function () {
-			var message = {
-				queue: my.id || '',
-				userId: my.userId
-			};
-
-			console.log('SOCKET SEND SUBSCRIBE', message);
-
-			my.socket.send([
-				my.cfg.subscribe,
-				JSON.stringify(message)
-			].join(':'));
+	Whiteboard.prototype.onConnect = function () {
+		var message = {
+			queue: this.id || '',
+			userId: this.userId
 		};
 
-		if (this.socket.socket.connected) {
-			onConnect();
+		console.log('SOCKET SEND SUBSCRIBE', message);
+
+		this.socket.send([
+			this.cfg.subscribe,
+			JSON.stringify(message)
+		].join(':'));
+	};
+
+	Whiteboard.prototype.onMessage = function (message) {
+		console.log('SOCKET RECEIVE', message);
+
+		if (message.wbId != null && this.id != message.wbId) {
+			this.id = message.wbId;
+			this.observable.fireEvent('id', this.id);
+		}
+
+		if (message.userId == this.userId) {
+			if (message.snapshot) {
+				this.drawer.drawPng(message.snapshot);
+			}
 		} else {
-			this.socket.once('connect', onConnect);
+			if (message.width || message.height) {
+				this.drawer.resize(message.width, message.height);
+			}
+
+			if (message.figure) {
+				this.drawer.drawFigure(message.figure);
+			}
+		}
+	};
+
+	Whiteboard.prototype.unbindSocket = function () {
+		if (this.socket) {
+			this.socket.removeListener('connect', this._onConnect);
+			this.socket.removeListener('message', this._onMessage);
 		}
 	};
 
 	Whiteboard.prototype.sendFigure = function (figure) {
+		if (null == this.socket) { return; }
+		if (null == this.id) { return; }
+
 		var message = {
 			queue: this.id,
 			data: {
@@ -134,7 +147,7 @@ var Whiteboard = (function () {
 		].join(':'));
 	};
 
-	Whiteboard.prototype.bindEvents = function () {
+	Whiteboard.prototype.bindInput = function () {
 		var my = this;
 
 		var container = this.drawer.container;
@@ -173,6 +186,8 @@ var Whiteboard = (function () {
 
 
 	Whiteboard.prototype.onTouchStart = function (e) {
+		if (null == this.id) { return; }
+
 		this.drawer.updateContPos();
 
 		var touches = e.targetTouches;
@@ -211,12 +226,9 @@ var Whiteboard = (function () {
 		}
 	};
 
-	Whiteboard.prototype.onHashChange = function () {
-		this.id = this.getHash();
-		this.drawer.reset();
-	};
-
 	Whiteboard.prototype.onMouseDown = function (e) {
+		if (null == this.id) { return; }
+
 		if (1 != e.which) { return; }
 
 		this.isMouseDown = true;
@@ -263,10 +275,18 @@ var Whiteboard = (function () {
 
 	Whiteboard.prototype.onEndFigure = function (id) {
 		var figure = this.figures[id];
+
 		if (figure) {
+			this.observable.fireEvent('figure', figure);
+
 			this.sendFigure(figure);
 			delete this.figures[id];
 		}
+	};
+
+	Whiteboard.prototype.observable = {
+		fireEvent: function () {},
+		on: function () {}
 	};
 
 	return Whiteboard;
