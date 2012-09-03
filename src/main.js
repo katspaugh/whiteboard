@@ -117,11 +117,14 @@ var Whiteboard = (function () {
 		}
 	};
 
-	Whiteboard.prototype.unbindSocket = function () {
+	Whiteboard.prototype.unbind = function () {
 		if (this.socket) {
 			this.socket.removeListener('connect', this._onConnect);
 			this.socket.removeListener('message', this._onMessage);
 		}
+
+		document.removeEventListener('mouseup', this._onMouseUp);
+		document.removeEventListener('touchend', this._onTouchEnd);
 	};
 
 	Whiteboard.prototype.sendFigure = function (figure) {
@@ -150,37 +153,34 @@ var Whiteboard = (function () {
 	Whiteboard.prototype.bindInput = function () {
 		var my = this;
 
-		var container = this.drawer.container;
+		var canvas = this.drawer.canvas;
 
-		// mouse
-		container.addEventListener('mousedown', function (e) {
+		// mouse events
+		canvas.addEventListener('mousedown', function (e) {
 			return my.onMouseDown(e);
 		}, false);
 
-		container.addEventListener('mousemove', function (e) {
+		canvas.addEventListener('mousemove', function (e) {
 			return my.onMouseMove(e);
 		}, false);
 
+		this._onMouseUp = this.onMouseUp.bind(this);
 		document.addEventListener('mouseup', function (e) {
-			return my.onMouseUp(e);
+			return my._onMouseUp(e);
 		}, false);
 
-		// multitouch
-		container.addEventListener('touchstart', function (e) {
+		// touch events
+		canvas.addEventListener('touchstart', function (e) {
 			return my.onTouchStart(e);
 		}, false);
 
-		container.addEventListener('touchmove', function (e) {
+		canvas.addEventListener('touchmove', function (e) {
 			return my.onTouchMove(e);
 		}, false);
 
+		this._onTouchEnd = this.onTouchEnd.bind(this);
 		document.addEventListener('touchend', function (e) {
-			return my.onTouchEnd(e);
-		}, false);
-
-		// hashchange
-		window.addEventListener('hashchange', function (e) {
-			return my.onHashChange(e);
+			return my._onTouchEnd(e);
 		}, false);
 	};
 
