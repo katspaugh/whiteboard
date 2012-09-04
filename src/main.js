@@ -37,6 +37,11 @@ var Whiteboard = (function () {
 		this.figures = {};
 
 		this.createTools();
+		this.createSocket();
+		this.rebind();
+	};
+
+	Whiteboard.prototype.rebind = function () {
 		this.bindSocket();
 		this.bindInput();
 	};
@@ -60,19 +65,21 @@ var Whiteboard = (function () {
 		return document.location.hash.replace(/^#/, '');
 	};
 
-	Whiteboard.prototype.bindSocket = function () {
+	Whiteboard.prototype.createSocket = function () {
 		if (this.cfg.socket) {
 			this.socket = this.cfg.socket;
 		} else if (this.cfg.socketHost) {
 			this.socket = io.connect(this.cfg.socketHost);
-		} else {
-			return;
 		}
+	};
 
-		this._onMessage = this.onMessage.bind(this);
+	Whiteboard.prototype.bindSocket = function () {
+		if (!this.socket) { return; }
+
+		this._onMessage = this._onMessage || this.onMessage.bind(this);
 		this.socket.on('message', this._onMessage);
 
-		this._onConnect = this.onConnect.bind(this);
+		this._onConnect = this._onConnect || this.onConnect.bind(this);
 		if (this.socket.socket.connected) {
 			this.onConnect();
 		} else {
@@ -164,7 +171,7 @@ var Whiteboard = (function () {
 			return my.onMouseMove(e);
 		}, false);
 
-		this._onMouseUp = this.onMouseUp.bind(this);
+		this._onMouseUp = this._onMouseUp || this.onMouseUp.bind(this);
 		document.addEventListener('mouseup', function (e) {
 			return my._onMouseUp(e);
 		}, false);
@@ -178,7 +185,7 @@ var Whiteboard = (function () {
 			return my.onTouchMove(e);
 		}, false);
 
-		this._onTouchEnd = this.onTouchEnd.bind(this);
+		this._onTouchEnd = this._onTouchEnd || this.onTouchEnd.bind(this);
 		document.addEventListener('touchend', function (e) {
 			return my._onTouchEnd(e);
 		}, false);
