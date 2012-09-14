@@ -58,15 +58,20 @@
 		return canvas;
 	};
 
-	Drawer.prototype.drawPng = function (pngUrl) {
-		var img = new Image();
+	Drawer.prototype.drawUnder = function (img) {
 		var ctx = this.context;
+		var prevMode = ctx.globalCompositeOperation;
+		ctx.globalCompositeOperation = 'destination-over';
+		ctx.drawImage(img, 0, 0);
+		ctx.globalCompositeOperation = prevMode;
+	};
+
+	Drawer.prototype.drawPng = function (pngUrl) {
+		var my = this;
+		var img = new Image;
 
 		img.addEventListener('load', function () {
-			var prevMode = ctx.globalCompositeOperation;
-			ctx.globalCompositeOperation = 'destination-over';
-			ctx.drawImage(img, 0, 0);
-			ctx.globalCompositeOperation = prevMode;
+			my.drawUnder(this);
 		}, false);
 
 		img.src = pngUrl;
