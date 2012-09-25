@@ -4,9 +4,8 @@ var trainingSet = [];
 (function () {
 	'use strict';
 
-	var TRESHOLD = 0.9;
-	var SAMPLE_POINTS = 50;
-	var SAMPLE_HYPOTENUSE = 424; // 300x300
+	var THRESHOLD = 0.9;
+	var SAMPLE_SQUARE_SIZE = 100;
 
 
 	var worker;
@@ -17,46 +16,49 @@ var trainingSet = [];
 	var trainButton;
 
 
-	var toNearest = function (list, toLen) {
-		var len = list.length;
-		var step = Math.floor(len / toLen) || 1;
-		var sentinel = [ -1, -1 ];
-		var result = [];
-
-		for (var i = 0; i < toLen; i += 1) {
-			result[i] = list[i * step] || sentinel;
-		}
-
-		return result;
-	};
-
-
 	var normalize = function (figure) {
 		var extrem = whiteboard.drawer.getMinMax(figure);
 		var min = extrem.min;
 		var max = extrem.max;
 
-		var hypo = Math.sqrt(
-			Math.pow(max.x - min.x, 2) + Math.pow(max.y - min.y, 2)
-		);
+		var size = Math.max(max.x - min.x, max.y - min.y);
+		var k = SAMPLE_SQUARE_SIZE / size;
 
-		var k = SAMPLE_HYPOTENUSE / hypo;
-
-		var scaled = figure.data.map(function (point) {
+		var scaled = figure.data.map(function (item) {
 			return [
-				Math.round((point[0] - min.x) * k),
-				Math.round((point[1] - min.y) * k)
+				~~((item[0] - min.x) * k),
+				~~((item[1] - min.y) * k)
 			];
 		});
 
-		var nearest = toNearest(scaled, SAMPLE_POINTS);
+		/*
+		// debug drawing
+		whiteboard.drawer.drawFigure({
+			color: figure.color,
+			radius: 1,
+			type: figure.type,
+			data: scaled
+		});
+		*/
 
-		var flat = [];
-		nearest.forEach(function (point) {
-			flat.push.apply(flat, point);
+		var matrix = {};
+		for (var i = 0; i < SAMPLE_SQUARE_SIZE; i += 1) {
+			matrix['x' + i] = 0;
+			matrix['y' + i] = 0;
+		}
+
+		scaled.forEach(function (item) {
+			var slotX = 'x' + item[0];
+			var slotY = 'y' + item[1];
+			if (slotX in matrix) {
+				matrix[slotX] = 1;
+			}
+			if (slotY in matrix) {
+				matrix[slotY] = 1;
+			}
 		});
 
-		return flat;
+		return matrix;
 	};
 
 
@@ -130,17 +132,18 @@ var trainingSet = [];
 
 		if (trained) {
 			var output = net.run(normalize(figure));
+
 			console.log(
 				'Rect: %d, circle %d',
 				output.rect,
 				output.circle
 			);
 
-			if (output.rect > output.circle && output.rect > TRESHOLD) {
+			if (output.rect > output.circle && output.rect > THRESHOLD) {
 				whiteboard.drawer.drawRect(figure);
 			}
 
-			if (output.circle > output.rect && output.circle > TRESHOLD) {
+			if (output.circle > output.rect && output.circle > THRESHOLD) {
 				whiteboard.drawer.reset();
 				whiteboard.drawer.drawCircle(figure);
 			}
@@ -174,7 +177,7 @@ var trainingSet = [];
 
 		bindButtons();
 
-		if (window._netData) {
+		if (0 && window._netData) {
 			net = new brain.NeuralNetwork().fromJSON(_netData);
 			toggleTrained(true);
 		} else {
