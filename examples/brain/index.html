@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8" />
 
-	<title>Whiteboard Demo</title>
+	<title>Whiteboard + brain.js: online shape recognition</title>
 
 	<link rel="stylesheet" href="css/default.css" />
 
@@ -21,12 +21,9 @@
 
 <body>
 	<fieldset>
-		<legend>Trainging shape recognizer</legend>
+		<legend>Traing shape recognizer</legend>
 
-		<p id="shapes">
-			<button data-shape="rect">❑ Rectangle</button>
-			<button data-shape="circle">❍ Circle</button>
-		</p>
+		<p id="shape-buttons"></p>
 
 		<p>
 			Training for the shape:
@@ -34,13 +31,14 @@
 		</p>
 
 		<button id="train">...</button>
+
+
+		<footer>
+			Neural network from
+			<a href="https://github.com/harthur/brain">github://harthur/brain</a>
+		</footer>
 	</fieldset>
 
 	<div class="container"></div>
-
-	<footer>
-		Neural network from
-		<a href="https://github.com/harthur/brain">github://harthur/brain</a>
-	</footer>
 </body>
 </html>

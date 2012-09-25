@@ -8,6 +8,14 @@ var trainingSet = [];
 	var SAMPLE_SQUARE_SIZE = 100;
 
 
+	var SYMBOLS = {
+		rect: String.fromCharCode(10065),
+        circle: String.fromCharCode(10061),
+		triangle: String.fromCharCode(9651),
+		curve: String.fromCharCode(8768)
+	};
+
+
 	var worker;
 	var whiteboard;
 	var currentShape;
@@ -33,6 +41,7 @@ var trainingSet = [];
 
 		/*
 		// debug drawing
+		whiteboard.drawer.reset();
 		whiteboard.drawer.drawFigure({
 			color: figure.color,
 			radius: 1,
@@ -62,29 +71,35 @@ var trainingSet = [];
 	};
 
 
-	var setShape = function (shape) {
-		var symbols = {
-			rect: String.fromCharCode(10065),
-            circle: String.fromCharCode(10061)
-		};
+	var normalizeSet = function (list) {
+		return list.map(function (item) {
+			var output = {};
+			output[item.shape] = 1;
 
+			return {
+				input: normalize(item.figure),
+				output: output
+			};
+		});
+	};
+
+
+	var setShape = function (shape) {
 		if (shape !== currentShape) {
 			currentShape = shape;
 
 			// indicator
 			document.querySelector('#shape-indicator').textContent =
-				symbols[shape];
+				SYMBOLS[shape];
 		}
 	};
 
 
 	var bindButtons = function () {
 		trainButton = document.querySelector('#train');
-		var buttonsGrp = document.querySelector('#shapes');
 
-		var onShapeButtonClick = function (e) {
-			e.preventDefault();
-			var shape = e.target.dataset.shape;
+		var onHashChange = function (e) {
+			var shape = location.hash.substring(1);
 			shape && setShape(shape);
 		};
 
@@ -97,18 +112,27 @@ var trainingSet = [];
 				if (trainingSet.length) {
 					setLoading();
 
-					worker.postMessage(JSON.stringify(trainingSet));
+					worker.postMessage(JSON.stringify(
+						normalizeSet(trainingSet)
+					));
 				} else {
 					alert('No trainging data!');
 				}
 			}
 		};
 
-		buttonsGrp.addEventListener('click', onShapeButtonClick, false);
-
 		trainButton.addEventListener('click', onTrainButtonClick, false);
+		window.addEventListener('hashchange', onHashChange, false);
 
-		setShape('rect');
+		setShape(location.hash.substring(1) || 'rect');
+
+		var buttonsGroup = document.querySelector('#shape-buttons');
+		Object.keys(SYMBOLS).forEach(function (shape) {
+			var link = document.createElement('a');
+			link.href = '#' + shape;
+			link.textContent = SYMBOLS[shape] + ' ' + shape;
+			buttonsGroup.appendChild(link);
+		});
 	};
 
 
@@ -149,11 +173,8 @@ var trainingSet = [];
 			}
 		} else {
 			trainingSet.push({
-				input: normalize(figure),
-				output: {
-					rect: +('rect' == currentShape),
-					circle: +('circle' == currentShape)
-				}
+				figure: figure,
+				shape: currentShape
 			});
 		}
 	};
@@ -177,7 +198,7 @@ var trainingSet = [];
 
 		bindButtons();
 
-		if (0 && window._netData) {
+		if (window._netData) {
 			net = new brain.NeuralNetwork().fromJSON(_netData);
 			toggleTrained(true);
 		} else {
