@@ -186,6 +186,64 @@
 		}
 	};
 
+	Drawer.prototype.getMinMax = function (figure) {
+		var minX = Number.MAX_VALUE;
+		var minY = Number.MAX_VALUE;
+		var maxX = 0;
+		var maxY = 0;
+
+		figure.data.forEach(function (point) {
+			var x = point[0];
+			var y = point[1];
+			if (x < minX) { minX = x; }
+			if (y < minY) { minY = y; }
+			if (x > maxX) { maxX = x; }
+			if (y > maxY) { maxY = y; }
+		});
+
+		return {
+			min: { x: minX, y: minY },
+			max: { x: maxX, y: maxY }
+		};
+	};
+
+	Drawer.prototype.drawRect = function (figure) {
+		var extrem = this.getMinMax(figure);
+		var min = extrem.min;
+		var max = extrem.max;
+
+		this.context.lineWidth = figure.radius * 2;
+		this.context.lineCap = 'round';
+		this.context.lineJoin = 'round';
+		this.context.strokeStyle = figure.color;
+		this.context.strokeRect(min.x, min.y, max.x - min.x, max.y - min.y);
+	};
+
+	Drawer.prototype.drawCircle = function (figure) {
+		var extrem = this.getMinMax(figure);
+		var min = extrem.min;
+		var max = extrem.max;
+
+		this.context.lineCap = 'round';
+		this.context.lineJoin = 'round';
+		this.context.fillStyle = figure.color;
+		this.context.strokeStyle = figure.color;
+		this.context.lineWidth = figure.radius * 2;
+
+		var rX = (max.x - min.x) / 2;
+		var rY = (max.y - min.y) / 2;
+		var r = Math.round((rX + rY) / 2); // average
+
+		this.context.beginPath();
+		this.context.arc(
+			min.x + rX, min.y + rY,
+			r, 0, Math.PI * 2, false
+		);
+		this.context.closePath();
+		this.context.stroke();
+	};
+
+
 	if (NS.module) {
 		NS.module.exports = Drawer;
 	} else {

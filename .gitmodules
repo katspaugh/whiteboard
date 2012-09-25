@@ -1,3 +1,0 @@
-[submodule "lib/socket.io-client"]
-	path = lib/socket.io-client
-	url = git://github.com/LearnBoost/socket.io-client.git
