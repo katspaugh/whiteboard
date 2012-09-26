@@ -94,9 +94,10 @@
 		);
 	};
 
-	Drawer.prototype.getData = function () {
+	Drawer.prototype.getData = function (x, y, w, h) {
 		return this.context.getImageData(
-			0, 0, this.width, this.height
+			x || 0, y || 0,
+			w || this.width, h || this.height
 		);
 	};
 

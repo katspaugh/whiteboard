@@ -1,11 +1,12 @@
-var netData;
 var trainingSet = [];
+var normalSet = [];
 
 (function () {
 	'use strict';
 
-	var THRESHOLD = 0.9;
-	var SAMPLE_SQUARE_SIZE = 100;
+	var TEST_THRESHOLD = 0.8;
+	var SAMPLE_SQUARE_SIZE = 10;
+	var SAMPLE_RADIUS = 1;
 
 
 	var SYMBOLS = {
@@ -24,63 +25,50 @@ var trainingSet = [];
 	var trainButton;
 
 
-	var normalize = function (figure) {
+	var normalize = function (item) {
+		var figure = item.figure;
+		var shape = item.shape;
+
 		var extrem = whiteboard.drawer.getMinMax(figure);
 		var min = extrem.min;
 		var max = extrem.max;
 
 		var size = Math.max(max.x - min.x, max.y - min.y);
-		var k = SAMPLE_SQUARE_SIZE / size;
+		var k = (SAMPLE_SQUARE_SIZE - SAMPLE_RADIUS * 4) / size;
 
-		var scaled = figure.data.map(function (item) {
+		var kr = SAMPLE_RADIUS / k;
+		var points = figure.data.map(function (item) {
 			return [
-				~~((item[0] - min.x) * k),
-				~~((item[1] - min.y) * k)
+				~~((item[0] - min.x) + kr * 2),
+				~~((item[1] - min.y) + kr * 2)
 			];
 		});
 
-		/*
-		// debug drawing
 		whiteboard.drawer.reset();
+		whiteboard.drawer.context.save();
+		whiteboard.drawer.context.scale(k, k);
 		whiteboard.drawer.drawFigure({
-			color: figure.color,
-			radius: 1,
 			type: figure.type,
-			data: scaled
+			radius: Math.ceil(kr),
+			color: '#000',
+			data: points
 		});
-		*/
+		whiteboard.drawer.context.restore();
 
-		var matrix = {};
-		for (var i = 0; i < SAMPLE_SQUARE_SIZE; i += 1) {
-			matrix['x' + i] = 0;
-			matrix['y' + i] = 0;
+		var image = whiteboard.drawer.getData(
+			0, 0, SAMPLE_SQUARE_SIZE, SAMPLE_SQUARE_SIZE
+		);
+		var data = image.data;
+
+		var input = [];
+		for (var i = 0, len = data.length; i < len; i += 4) {
+			input.push(data[i + 3]);
 		}
 
-		scaled.forEach(function (item) {
-			var slotX = 'x' + item[0];
-			var slotY = 'y' + item[1];
-			if (slotX in matrix) {
-				matrix[slotX] = 1;
-			}
-			if (slotY in matrix) {
-				matrix[slotY] = 1;
-			}
-		});
+		var output = {};
+		output[shape] = 1;
 
-		return matrix;
-	};
-
-
-	var normalizeSet = function (list) {
-		return list.map(function (item) {
-			var output = {};
-			output[item.shape] = 1;
-
-			return {
-				input: normalize(item.figure),
-				output: output
-			};
-		});
+		return { input: input, output: output };
 	};
 
 
@@ -112,9 +100,9 @@ var trainingSet = [];
 				if (trainingSet.length) {
 					setLoading();
 
-					worker.postMessage(JSON.stringify(
-						normalizeSet(trainingSet)
-					));
+					worker.postMessage(JSON.stringify(normalSet));
+
+					localStorage.trainingSet = JSON.stringify(trainingSet);
 				} else {
 					alert('No trainging data!');
 				}
@@ -124,15 +112,18 @@ var trainingSet = [];
 		trainButton.addEventListener('click', onTrainButtonClick, false);
 		window.addEventListener('hashchange', onHashChange, false);
 
-		setShape(location.hash.substring(1) || 'rect');
+		var shapes = Object.keys(SYMBOLS);
 
 		var buttonsGroup = document.querySelector('#shape-buttons');
-		Object.keys(SYMBOLS).forEach(function (shape) {
+		shapes.forEach(function (shape) {
 			var link = document.createElement('a');
 			link.href = '#' + shape;
 			link.textContent = SYMBOLS[shape] + ' ' + shape;
 			buttonsGroup.appendChild(link);
 		});
+
+		setShape(shapes[0]);
+		location.hash = shapes[0];
 	};
 
 
@@ -152,30 +143,36 @@ var trainingSet = [];
 
 
 	var onFigure = function (figure) {
-		whiteboard.drawer.reset();
-
 		if (trained) {
-			var output = net.run(normalize(figure));
+			var output = net.run(normalize({
+				figure: figure,
+				shape: currentShape
+			}).input);
 
 			console.log(
-				'Rect: %d, circle %d',
+				'Rect: %s, circle %s',
 				output.rect,
 				output.circle
 			);
 
-			if (output.rect > output.circle && output.rect > THRESHOLD) {
+			if (output.rect > output.circle &&
+				output.rect > TEST_THRESHOLD) {
 				whiteboard.drawer.drawRect(figure);
 			}
 
-			if (output.circle > output.rect && output.circle > THRESHOLD) {
-				whiteboard.drawer.reset();
+			if (output.circle > output.rect &&
+				output.circle > TEST_THRESHOLD) {
 				whiteboard.drawer.drawCircle(figure);
 			}
 		} else {
-			trainingSet.push({
+			var item = {
 				figure: figure,
 				shape: currentShape
-			});
+			};
+
+			trainingSet.push(item);
+
+			normalSet.push(normalize(item));
 		}
 	};
 
@@ -198,23 +195,20 @@ var trainingSet = [];
 
 		bindButtons();
 
-		if (window._netData) {
-			net = new brain.NeuralNetwork().fromJSON(_netData);
-			toggleTrained(true);
-		} else {
-			toggleTrained(false);
+		toggleTrained(false);
+
+		if ('trainingSet' in localStorage) {
+			trainingSet = JSON.parse(localStorage.trainingSet);
+			normalSet = trainingSet.map(normalize);
 		}
 	};
 
 
 	var onMessage = function (event) {
 		var data = JSON.parse(event.data);
+		net = new brain.NeuralNetwork().fromJSON(data);
 
 		toggleTrained(true);
-
-		netData = data;
-
-		net = new brain.NeuralNetwork().fromJSON(data);
 	};
 
 
