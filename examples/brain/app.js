@@ -11,9 +11,9 @@ var normalSet = [];
 
 	var SYMBOLS = {
 		rect: String.fromCharCode(10065),
-        circle: String.fromCharCode(10061),
+        circle: String.fromCharCode(10061)/*,
 		triangle: String.fromCharCode(9651),
-		curve: String.fromCharCode(8768)
+		curve: String.fromCharCode(8768)*/
 	};
 
 
