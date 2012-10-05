@@ -17,18 +17,26 @@ var normalSet = [];
 	};
 
 
+	var URL = [
+		'https://api.mongohq.com',
+		'/databases/whiteboard',
+		'/collections/figures',
+		'/documents',
+		'?_apikey=',
+		'TEST'
+	].join('');
+
+
 	var worker;
 	var whiteboard;
 	var currentShape;
 	var trained;
+	var storingAllowed;
 	var net;
 	var trainButton;
 
 
-	var normalize = function (item) {
-		var figure = item.figure;
-		var shape = item.shape;
-
+	var normalize = function (figure) {
 		var extrem = whiteboard.drawer.getMinMax(figure);
 		var min = extrem.min;
 		var max = extrem.max;
@@ -66,52 +74,36 @@ var normalSet = [];
 		}
 
 		var output = {};
-		output[shape] = 1;
+		output[figure.shape] = 1;
 
 		return { input: input, output: output };
 	};
 
 
 	var setShape = function (shape) {
-		if (shape !== currentShape) {
-			currentShape = shape;
+		currentShape = shape;
 
-			// indicator
-			document.querySelector('#shape-indicator').textContent =
-				SYMBOLS[shape];
-		}
+		// indicator
+		location.hash = shape;
+
+		document.querySelector('#shape-indicator').textContent =
+			SYMBOLS[shape];
 	};
 
 
 	var bindButtons = function () {
 		trainButton = document.querySelector('#train');
 
-		var onHashChange = function (e) {
-			var shape = location.hash.substring(1);
-			shape && setShape(shape);
-		};
-
-		var onTrainButtonClick = function (e) {
-			e.preventDefault();
-
-			if (trained) {
-				toggleTrained(false);
-			} else {
-				if (trainingSet.length) {
-					setLoading();
-
-					worker.postMessage(JSON.stringify(normalSet));
-
-					localStorage.trainingSet = JSON.stringify(trainingSet);
-				} else {
-					alert('No trainging data!');
-				}
-			}
-		};
-
 		trainButton.addEventListener('click', onTrainButtonClick, false);
 		window.addEventListener('hashchange', onHashChange, false);
 
+		document.querySelector('#allowStoring').addEventListener(
+			'change', onAllowStoring, false
+		);
+	};
+
+
+	var createShapeButtons = function () {
 		var shapes = Object.keys(SYMBOLS);
 
 		var buttonsGroup = document.querySelector('#shape-buttons');
@@ -123,7 +115,29 @@ var normalSet = [];
 		});
 
 		setShape(shapes[0]);
-		location.hash = shapes[0];
+	};
+
+
+	var onHashChange = function (e) {
+		var shape = location.hash.substring(1);
+		shape && setShape(shape);
+	};
+
+
+	var onTrainButtonClick = function (e) {
+		e.preventDefault();
+
+		if (trained) {
+			toggleTrained(false);
+		} else {
+			if (trainingSet.length) {
+				setLoading();
+
+				worker.postMessage(JSON.stringify(normalSet));
+			} else {
+				alert('No trainging data!');
+			}
+		}
 	};
 
 
@@ -143,36 +157,22 @@ var normalSet = [];
 
 
 	var onFigure = function (figure) {
+		figure.shape = currentShape;
+
 		if (trained) {
-			var output = net.run(normalize({
-				figure: figure,
-				shape: currentShape
-			}).input);
+			var output = net.run(normalize(figure).input);
 
-			console.log(
-				'Rect: %s, circle %s',
-				output.rect,
-				output.circle
-			);
+			console.info(output);
 
-			if (output.rect > output.circle &&
-				output.rect > TEST_THRESHOLD) {
+			if (output.rect > TEST_THRESHOLD) {
 				whiteboard.drawer.drawRect(figure);
 			}
 
-			if (output.circle > output.rect &&
-				output.circle > TEST_THRESHOLD) {
+			if (output.circle > TEST_THRESHOLD) {
 				whiteboard.drawer.drawCircle(figure);
 			}
 		} else {
-			var item = {
-				figure: figure,
-				shape: currentShape
-			};
-
-			trainingSet.push(item);
-
-			normalSet.push(normalize(item));
+			addData(figure);
 		}
 	};
 
@@ -184,6 +184,8 @@ var normalSet = [];
 		var observer = new Observer();
 		observer.on('figure', onFigure);
 
+		observer.on('figure', storeFigure);
+
 		whiteboard = new Whiteboard({
 			id: Math.random(),
 			renderTo   : '.container',
@@ -194,13 +196,10 @@ var normalSet = [];
 		});
 
 		bindButtons();
+		createShapeButtons();
 
 		toggleTrained(false);
-
-		if ('trainingSet' in localStorage) {
-			trainingSet = JSON.parse(localStorage.trainingSet);
-			normalSet = trainingSet.map(normalize);
-		}
+		loadFigures();
 	};
 
 
@@ -209,6 +208,68 @@ var normalSet = [];
 		net = new brain.NeuralNetwork().fromJSON(data);
 
 		toggleTrained(true);
+	};
+
+
+	var onAllowStoring = function (e) {
+		storingAllowed = e.target.checked;
+	};
+
+
+	var storeFigure = function (figure) {
+		if (!storingAllowed || trained) { return; }
+
+		var client = new XMLHttpRequest();
+		client.open('POST', URL);
+		client.setRequestHeader('Content-Type', 'application/json');
+
+		figure.shape = currentShape;
+
+		var document = JSON.stringify({
+			document: figure
+		});
+
+		client.onreadystatechange = function () {
+			if (this.readyState == this.DONE) {
+				console.info(this.responseText);
+			}
+		};
+
+		client.send(document);
+	};
+
+
+	var loadFigures = function () {
+		var client = new XMLHttpRequest();
+		client.open('GET', URL);
+		client.setRequestHeader('Content-Type', 'application/json');
+
+		client.onreadystatechange = function () {
+			if (this.readyState == this.DONE) {
+				try {
+					var data = JSON.parse(this.responseText);
+					addData(data);
+				} catch (e) {
+					console.error(e);
+				}
+			}
+		};
+
+		client.send();
+	};
+
+
+	var addData = function (data) {
+		var add = function (item) {
+			trainingSet.push(item);
+			normalSet.push(normalize(item));
+		};
+
+		if (data instanceof Array) {
+			data.forEach(add);
+		} else {
+			add(data);
+		}
 	};
 
 
