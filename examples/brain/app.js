@@ -4,27 +4,16 @@ var normalSet = [];
 (function () {
 	'use strict';
 
-	var TEST_THRESHOLD = 0.8;
+	var TEST_THRESHOLD = 0.95;
 	var SAMPLE_SQUARE_SIZE = 10;
 	var SAMPLE_RADIUS = 1;
 
 
 	var SYMBOLS = {
 		rect: String.fromCharCode(10065),
-        circle: String.fromCharCode(10061)/*,
-		triangle: String.fromCharCode(9651),
-		curve: String.fromCharCode(8768)*/
+		circle: String.fromCharCode(10061),
+		triangle: String.fromCharCode(9651)
 	};
-
-
-	var URL = [
-		'https://api.mongohq.com',
-		'/databases/whiteboard',
-		'/collections/figures',
-		'/documents',
-		'?_apikey=',
-		'TEST'
-	].join('');
 
 
 	var worker;
@@ -97,9 +86,9 @@ var normalSet = [];
 		trainButton.addEventListener('click', onTrainButtonClick, false);
 		window.addEventListener('hashchange', onHashChange, false);
 
-		document.querySelector('#allowStoring').addEventListener(
-			'change', onAllowStoring, false
-		);
+		var allowCheckbox = document.querySelector('#allowStoring');
+		allowCheckbox.addEventListener('change', onAllowStoring, false);
+		onAllowStoring.call(allowCheckbox);
 	};
 
 
@@ -212,22 +201,18 @@ var normalSet = [];
 
 
 	var onAllowStoring = function (e) {
-		storingAllowed = e.target.checked;
+		storingAllowed = this.checked;
 	};
 
 
 	var storeFigure = function (figure) {
 		if (!storingAllowed || trained) { return; }
 
+		var url = 'http://chew.io/whiteboard/create.json';
+
 		var client = new XMLHttpRequest();
-		client.open('POST', URL);
+		client.open('POST', url);
 		client.setRequestHeader('Content-Type', 'application/json');
-
-		figure.shape = currentShape;
-
-		var document = JSON.stringify({
-			document: figure
-		});
 
 		client.onreadystatechange = function () {
 			if (this.readyState == this.DONE) {
@@ -235,20 +220,39 @@ var normalSet = [];
 			}
 		};
 
+
+		figure.shape = currentShape;
+		var document = JSON.stringify(figure);
+
 		client.send(document);
 	};
 
 
-	var loadFigures = function () {
+	var loadFigures = function (page) {
+		var LIMIT = 20;
+		if (!page) { page = 1; }
+
+		var url = [
+			'http://chew.io/whiteboard/read.json?',
+			'&limit=' + LIMIT,
+			'&skip=' + LIMIT * (page - 1)
+		].join('');
+
 		var client = new XMLHttpRequest();
-		client.open('GET', URL);
+		client.open('GET', url);
 		client.setRequestHeader('Content-Type', 'application/json');
 
 		client.onreadystatechange = function () {
 			if (this.readyState == this.DONE) {
+				var total = this.getResponseHeader('X-Mongohq-Count');
+
 				try {
 					var data = JSON.parse(this.responseText);
 					addData(data);
+
+					if (page < total / LIMIT) {
+						loadFigures(page + 1);
+					}
 				} catch (e) {
 					console.error(e);
 				}

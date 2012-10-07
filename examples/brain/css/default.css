@@ -20,7 +20,7 @@ body {
 fieldset {
 	float: left;
 	width: 280px;
-	height: 280px;
+	min-height: 280px;
 }
 
 fieldset p {
@@ -41,7 +41,7 @@ fieldset p a {
 
 footer {
 	clear: both;
-	padding: 60px 0 0;
+	padding: 40px 0 0;
 }
 
 big {
