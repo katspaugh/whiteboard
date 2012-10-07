@@ -4,7 +4,7 @@ var normalSet = [];
 (function () {
 	'use strict';
 
-	var TEST_THRESHOLD = 0.95;
+	var TEST_THRESHOLD = 0.9;
 	var SAMPLE_SQUARE_SIZE = 10;
 	var SAMPLE_RADIUS = 1;
 
@@ -159,6 +159,10 @@ var normalSet = [];
 
 			if (output.circle > TEST_THRESHOLD) {
 				whiteboard.drawer.drawCircle(figure);
+			}
+
+			if (output.triangle > TEST_THRESHOLD) {
+				whiteboard.drawer.drawPolygon(figure);
 			}
 		} else {
 			addData(figure);

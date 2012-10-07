@@ -208,6 +208,60 @@
 		};
 	};
 
+	Drawer.prototype.drawPolygon = function (figure) {
+		var MIN_ANGLE = 20;
+		var MIN_VERTICES = 3;
+		var MAX_VERTICES = 7;
+
+		var points = figure.data;
+		var vertices = [];
+		var prevTan = 0;
+
+		for (var i = 0; i < points.length - 1; i += 1) {
+			var p1 = points[i];
+			var p2 = points[i + 1];
+
+			var tan = Math.atan2(p2[0] - p1[0], p2[1] - p1[1]);
+			var diff = ~~Math.abs((prevTan - tan) * (180 / Math.PI));
+
+			if (diff > 90) {
+				diff %= 90;
+			}
+
+			if (diff >= MIN_ANGLE) {
+				vertices.push(p1);
+			}
+
+			prevTan = tan;
+		}
+
+		vertices.push(points[points.length - 1]);
+
+		var len = vertices.length;
+		if (len < MIN_VERTICES || len > MAX_VERTICES) {
+			this.drawFigure(figure);
+			return;
+		}
+
+		var ctx = this.context;
+
+		ctx.lineCap = 'round';
+		ctx.lineJoin = 'round';
+		ctx.fillStyle = figure.color;
+		ctx.strokeStyle = figure.color;
+		ctx.lineWidth = figure.radius * 2;
+
+		ctx.beginPath();
+		ctx.moveTo(vertices[0]);
+
+		vertices.forEach(function (p) {
+			ctx.lineTo(p[0], p[1]);
+		});
+
+		ctx.closePath();
+		ctx.stroke();
+	};
+
 	Drawer.prototype.drawRect = function (figure) {
 		var extrem = this.getMinMax(figure);
 		var min = extrem.min;
