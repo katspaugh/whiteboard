@@ -85,10 +85,6 @@ var normalSet = [];
 
 		trainButton.addEventListener('click', onTrainButtonClick, false);
 		window.addEventListener('hashchange', onHashChange, false);
-
-		var allowCheckbox = document.querySelector('#allowStoring');
-		allowCheckbox.addEventListener('change', onAllowStoring, false);
-		onAllowStoring.call(allowCheckbox);
 	};
 
 
@@ -192,7 +188,6 @@ var normalSet = [];
 		createShapeButtons();
 
 		toggleTrained(false);
-		loadFigures();
 	};
 
 
@@ -201,69 +196,6 @@ var normalSet = [];
 		net = new brain.NeuralNetwork().fromJSON(data);
 
 		toggleTrained(true);
-	};
-
-
-	var onAllowStoring = function (e) {
-		storingAllowed = this.checked;
-	};
-
-
-	var storeFigure = function (figure) {
-		if (!storingAllowed || trained) { return; }
-
-		var url = 'http://chew.io/whiteboard/create.json';
-
-		var client = new XMLHttpRequest();
-		client.open('POST', url);
-		client.setRequestHeader('Content-Type', 'application/json');
-
-		client.onreadystatechange = function () {
-			if (this.readyState == this.DONE) {
-				console.info(this.responseText);
-			}
-		};
-
-
-		figure.shape = currentShape;
-		var document = JSON.stringify(figure);
-
-		client.send(document);
-	};
-
-
-	var loadFigures = function (page) {
-		var LIMIT = 20;
-		if (!page) { page = 1; }
-
-		var url = [
-			'http://chew.io/whiteboard/read.json?',
-			'&limit=' + LIMIT,
-			'&skip=' + LIMIT * (page - 1)
-		].join('');
-
-		var client = new XMLHttpRequest();
-		client.open('GET', url);
-		client.setRequestHeader('Content-Type', 'application/json');
-
-		client.onreadystatechange = function () {
-			if (this.readyState == this.DONE) {
-				var total = this.getResponseHeader('X-Mongohq-Count');
-
-				try {
-					var data = JSON.parse(this.responseText);
-					addData(data);
-
-					if (page < total / LIMIT) {
-						loadFigures(page + 1);
-					}
-				} catch (e) {
-					console.error(e);
-				}
-			}
-		};
-
-		client.send();
 	};
 
 
