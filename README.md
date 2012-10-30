@@ -9,4 +9,11 @@ Heavily inspired by very cool [opinsys/walma](https://github.com/opinsys/walma).
 
 ![Whiteboard](http://i.imgur.com/y56zh.png)
 
+License
+=======
+
+GPLv3
+
+We can also provide a commercially licensed version by request.
+
 © RIA Novosti Media Lab
