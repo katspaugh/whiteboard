@@ -20,7 +20,6 @@ var normalSet = [];
 	var whiteboard;
 	var currentShape;
 	var trained;
-	var storingAllowed;
 	var net;
 	var trainButton;
 
@@ -172,8 +171,6 @@ var normalSet = [];
 
 		var observer = new Observer();
 		observer.on('figure', onFigure);
-
-		observer.on('figure', storeFigure);
 
 		whiteboard = new Whiteboard({
 			id: Math.random(),
