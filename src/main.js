@@ -89,7 +89,7 @@ var Whiteboard = (function () {
 
 	Whiteboard.prototype.onConnect = function () {
 		var message = {
-			queue: this.id || '',
+			wbId: this.id || '',
 			userId: this.userId
 		};
 
@@ -139,10 +139,9 @@ var Whiteboard = (function () {
 		if (null == this.id) { return; }
 
 		var message = {
-			queue: this.id,
+			wbId: this.id,
+			userId: this.userId,
 			data: {
-				wbId: this.id,
-				userId: this.userId,
 				width: this.drawer.width,
 				height: this.drawer.height,
 				figure: figure
