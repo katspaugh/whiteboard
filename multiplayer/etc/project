@@ -6,7 +6,7 @@
 
 	"initiator" : {
 		"http" : {
-			"port": 50088,
+			"port": 50112,
 			"static": {
 				"root": "htdocs",
 				"index": "index.html"
@@ -59,7 +59,7 @@
 		},
 
 		"socket": {
-			"port": 50089,
+			"port": 50092,
 			"workflows": [{
 				"route": "/whiteboard/subscribe",
 				"description": "subscribe for/create whiteboard queue",
