@@ -12,7 +12,7 @@ Heavily inspired by very cool [opinsys/walma](https://github.com/opinsys/walma).
 Server Installation
 ===================
 
-Install node, RabbitMQ, MongoDB, [XQuartz](http://xquartz.macosforge.org/landing/) and cairo.
+Install [XQuartz](http://xquartz.macosforge.org/landing/) (manually); install Node.js, RabbitMQ, MongoDB and Cairo.
 
     $ brew install node rabbitmq mongodb cairo
 
