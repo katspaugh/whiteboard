@@ -25,10 +25,7 @@
 					"fileName": "{$request.url.query.wbId}",
 					"fileData": "{$data.png.buffer}",
 					"options": {
-						"content_type": "image/png",
-						"metadata": {
-							"userId": "{$request.url.query.userId}"
-						}
+						"content_type": "image/png"
 					},
 					"$set": "data.writeSuccess"
 				}, {
@@ -94,12 +91,17 @@
 					"method": "publish",
 					"data": {
 						"queue": "{$query.data.wbId}",
-						"data": "{$query.data.data}"
+						"data": {
+							"userId": "{$query.data.userId}",
+							"wbId": "{$query.data.wbId}",
+							"figure": "{$query.data.figure}",
+							"width": "{$query.data.width}",
+							"height": "{$query.data.width}"
+						}
 					}
 				}, {
 					"$class": "node_modules/drawer",
-					"canvasId": "{$query.data.wbId}",
-					"figure": "{$query.data.data}"
+					"data": "{$query.data}"
 				}]
 			}]
 		}

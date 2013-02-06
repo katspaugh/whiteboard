@@ -30,9 +30,8 @@ var Whiteboard = (function () {
 
 		this.drawer = new Whiteboard.Drawer(this.cfg);
 
-		this.id = this.cfg.id;
-		this.userId = this.cfg.userId ||
-			Math.random().toString(32).substring(2);
+		this.id = this.cfg.id || this.getRandomId('wb-');
+		this.userId = this.cfg.userId || this.getRandomId('user-');
 
 		this.figures = {};
 
@@ -40,6 +39,10 @@ var Whiteboard = (function () {
 		this.createSocket();
 		this.rebind();
 	};
+
+	Whiteboard.prototype.getRandomId = function(prefix) {
+		return (prefix || '') + Math.random().toString(32).substring(2);
+	}
 
 	Whiteboard.prototype.rebind = function () {
 		this.bindSocket();
@@ -141,11 +144,9 @@ var Whiteboard = (function () {
 		var message = {
 			wbId: this.id,
 			userId: this.userId,
-			data: {
-				width: this.drawer.width,
-				height: this.drawer.height,
-				figure: figure
-			}
+			width: this.drawer.width,
+			height: this.drawer.height,
+			figure: figure
 		};
 
 		console.log('SOCKET SEND FIGURE', message);
