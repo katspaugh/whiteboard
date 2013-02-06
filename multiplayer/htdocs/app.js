@@ -17,7 +17,7 @@
 			observable: Object.create(Observer)
 		});
 
-		wb.observable.on('id', function (wb, id) {
+		wb.observable.on('id', function (id) {
 			location.hash = id;
 		});
 	});

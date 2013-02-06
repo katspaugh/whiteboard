@@ -107,7 +107,7 @@ var Whiteboard = (function () {
 	Whiteboard.prototype.onMessage = function (message) {
 		console.log('SOCKET RECEIVE', message);
 
-		if (message.wbId != null && this.id != message.wbId) {
+		if (message.wbId != null) {
 			this.id = message.wbId;
 			this.observable.fireEvent('id', this.id);
 		}
