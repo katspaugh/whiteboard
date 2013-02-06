@@ -12,7 +12,7 @@ Heavily inspired by very cool [opinsys/walma](https://github.com/opinsys/walma).
 Server Installation
 ===================
 
-Install [XQuartz](http://xquartz.macosforge.org/landing/) (manually); install Node.js, RabbitMQ, MongoDB and Cairo.
+Install [XQuartz](http://xquartz.macosforge.org/landing/) (manually); install Node.js, RabbitMQ, MongoDB and Cairo:
 
     $ brew install node rabbitmq mongodb cairo
 
@@ -29,7 +29,7 @@ You'll also need the following npm modules:
 Running The Server
 ==================
 
-Launch MongoDB and RabbitMQ. Go to the directory `multiplayer` of your Whiteboard clone and run `dataflo.ws` (npm's `bin` directory must be in your `$PATH`). Open the browser at [http://localhost:50088](http://localhost:50088) and share the URL with others. Have fun!
+Launch MongoDB and RabbitMQ. Go to the directory `multiplayer` of your Whiteboard clone and run `dataflows` (npm's `bin` directory must be in your `$PATH`). Open the browser at [http://localhost:50088](http://localhost:50088) and share the URL with others. Have fun!
 
 License
 =======
