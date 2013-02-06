@@ -26,15 +26,15 @@ You'll also need the following npm modules:
 
     $ npm install -g socket.io amqp dataflo.ws dataflo.ws-amqp
 
-Running the server
+Running The Server
 ==================
 
-Launch MongoDB and RabbitMQ. Go to the directory `multiplayer` of your Whiteboard clone and run `dataflo.ws` (npm's `bin` directory must be in your `$PATH`). Open the browser at http://localhost:50088 and share the URL with others. Have fun!
+Launch MongoDB and RabbitMQ. Go to the directory `multiplayer` of your Whiteboard clone and run `dataflo.ws` (npm's `bin` directory must be in your `$PATH`). Open the browser at [http://localhost:50088](http://localhost:50088) and share the URL with others. Have fun!
 
 License
 =======
 
-GPLv3
+**GPLv3**
 
 We can also provide a commercially licensed version by request.
 
