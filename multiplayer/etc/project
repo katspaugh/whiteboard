@@ -4,6 +4,12 @@
 
 	"consumerConfig": "<consumerConfig>",
 
+	"daemon": {
+		"whiteboard": {
+			"initiator": [ "http", "socket", "amqp" ]
+		}
+	},
+
 	"initiator" : {
 		"http" : {
 			"port": 50112,
