@@ -6,7 +6,7 @@
 
 	"daemon": {
 		"whiteboard": {
-			"initiator": [ "http", "socket", "amqp" ]
+			"initiator": [ "http", "socket" ]
 		}
 	},
 
