@@ -3,7 +3,7 @@ Multiplayer Whiteboard
 
 Real-time multiplayer whiteboard with multitouch support.
 
-Made with HTML5 Canvas, WebSocket (via socket.io) and Touch API.
+Made with HTML5 Canvas, WebSocket and Touch API.
 
 Heavily inspired by very cool [opinsys/walma](https://github.com/opinsys/walma).
 
@@ -12,24 +12,14 @@ Heavily inspired by very cool [opinsys/walma](https://github.com/opinsys/walma).
 Server Installation
 ===================
 
-Install [XQuartz](http://xquartz.macosforge.org/landing/) (manually); install Node.js, RabbitMQ, MongoDB and Cairo:
+Server implementation is presented in the unmaintained [`multiplayer` branch](https://github.com/katspaugh/whiteboard/tree/multiplayer) of the repo.
+The `master` branch contains only the client-side code.
 
-    $ brew install node rabbitmq mongodb cairo
+Examples
+========
 
-Install [node-canvas](https://github.com/LearnBoost/node-canvas):
-
-    $ PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig npm install -g canvas
-
-(`/opt/X11` is the directory where you should have installed XQuartz).
-
-You'll also need the following npm modules:
-
-    $ npm install -g socket.io amqp dataflo.ws dataflo.ws-amqp
-
-Running The Server
-==================
-
-Launch MongoDB and RabbitMQ. Go to the directory `multiplayer` of your Whiteboard clone and run `dataflows` (npm's `bin` directory must be in your `$PATH`). Open the browser at [http://localhost:50088](http://localhost:50088) and share the URL with others. Have fun!
+Basic demo: http://katspaugh.github.io/whiteboard/
+Whiteboard shape recognition using a neural network: http://katspaugh.github.io/whiteboard/examples/brain/
 
 License
 =======
