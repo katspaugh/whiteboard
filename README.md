@@ -18,9 +18,8 @@ The `master` branch contains only the client-side code.
 Examples
 ========
 
-Basic demo: http://katspaugh.github.io/whiteboard/
-
-Whiteboard shape recognition using a neural network: http://katspaugh.github.io/whiteboard/examples/brain/
+ * Basic demo: http://katspaugh.github.io/whiteboard/
+ * Whiteboard shape recognition using a neural network: http://katspaugh.github.io/whiteboard/examples/brain/
 
 License
 =======
