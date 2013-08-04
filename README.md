@@ -12,13 +12,14 @@ Heavily inspired by very cool [opinsys/walma](https://github.com/opinsys/walma).
 Server Installation
 ===================
 
-Server implementation is presented in the unmaintained [`multiplayer` branch](https://github.com/katspaugh/whiteboard/tree/multiplayer) of the repo.
+The server implementation is presented in the unmaintained [`multiplayer` branch](https://github.com/katspaugh/whiteboard/tree/multiplayer) of the repo.
 The `master` branch contains only the client-side code.
 
 Examples
 ========
 
 Basic demo: http://katspaugh.github.io/whiteboard/
+
 Whiteboard shape recognition using a neural network: http://katspaugh.github.io/whiteboard/examples/brain/
 
 License
